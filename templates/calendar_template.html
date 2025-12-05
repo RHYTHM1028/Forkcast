@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meal Planner - Forkcast</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --sage-green: #4A7C59;
+            --terracotta: #E07A5F;
+            --eggshell: #F4F1DE;
+            --white: #050404;
+            --deep-charcoal: #3D405B;
+        }
+        
+        .meal-slot {
+            min-height: 80px;
+            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(15px) saturate(180%);
+            -webkit-backdrop-filter: blur(15px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
+        .meal-slot:hover {
+            background: rgba(255, 255, 255, 0.85);
+            box-shadow: 0 8px 20px 0 rgba(31, 38, 135, 0.2);
+        }
+        
+        .meal-slot.has-recipe {
+            background: rgba(240, 253, 244, 0.8);
+            border-color: var(--sage-green);
+            backdrop-filter: blur(15px) saturate(180%);
+            -webkit-backdrop-filter: blur(15px) saturate(180%);
+        }
+        
+        .recipe-card {
+            font-size: 0.875rem;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(15px) saturate(180%);
+            -webkit-backdrop-filter: blur(15px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            cursor: pointer;
+        }
+        
+        .recipe-card:hover {
+            background: rgba(255, 255, 255, 0.85);
+            box-shadow: 0 10px 25px 0 rgba(31, 38, 135, 0.25);
+        }
+
+        /* Sidebar Navigation Styles */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            width: 70px;
+            background-color: var(--sage-green);
+            transition: width 0.3s ease;
+            z-index: 1000;
+            overflow: hidden;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar:hover {
+            width: 250px;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            opacity: 0.5;
+            white-space: nowrap;
+        }
+
+        .sidebar-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-item.active {
+            opacity: 1;
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .sidebar-item svg {
+            min-width: 24px;
+            width: 24px;
+            height: 24px;
+            margin-right: 0;
+            transition: margin-right 0.3s ease;
+        }
+
+        .sidebar:hover .sidebar-item svg {
+            margin-right: 1rem;
+        }
+
+        .sidebar-label {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .sidebar:hover .sidebar-label {
+            opacity: 1;
+        }
+
+        .sidebar-logo {
+            padding: 1.5rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .sidebar-logo img {
+            width: 40px;
+            height: 40px;
+            min-width: 40px;
+        }
+
+        .sidebar-logo-text {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            white-space: nowrap;
+        }
+
+        .sidebar:hover .sidebar-logo-text {
+            opacity: 1;
+        }
+
+        .sidebar-footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .main-content {
+            margin-left: 70px;
+            transition: margin-left 0.3s ease;
+        }
+
+        body {
+            overflow-x: hidden;
+        }
+    </style>
+</head>
+<body style="background-color: var(--eggshell); color: var(--deep-charcoal);">
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="sidebar-logo">
+            <img src="Images/logo.png" alt="Forkcast Logo">
+            <span class="sidebar-logo-text"><span style="color: #E07A5F;">FORK</span><span style="color: #F4F1DE;">CAST</span></span>
+        </div>
+        
+        <a href="{{ url_for('logged_in_home') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+            </svg>
+            <span class="sidebar-label">Home</span>
+        </a>
+        
+        <a href="{{ url_for('dashboard') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 12a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1v-7z"></path>
+            </svg>
+            <span class="sidebar-label">Dashboard</span>
+        </a>
+        
+        <a href="{{ url_for('recipes') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+            </svg>
+            <span class="sidebar-label">Recipes</span>
+        </a>
+        
+        <a href="{{ url_for('calendar') }}" class="sidebar-item active">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <span class="sidebar-label">Meal Planner</span>
+        </a>
+        
+        <a href="{{ url_for('calorie_tracker') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            <span class="sidebar-label">Calorie Tracker</span>
+        </a>
+        
+        <a href="{{ url_for('shopping_list') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            </svg>
+            <span class="sidebar-label">Shopping List</span>
+        </a>
+        
+        <a href="{{ url_for('notifications') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+            </svg>
+            <span class="sidebar-label">Notifications</span>
+        </a>
+        
+        <a href="{{ url_for('profile') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+            </svg>
+            <span class="sidebar-label">Profile</span>
+        </a>
+        
+        <div class="sidebar-footer">
+            <a href="{{ url_for('logout') }}" class="sidebar-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                </svg>
+                <span class="sidebar-label">Logout</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+    <div class="max-w-7xl mx-auto px-4 py-8">
+                    <div id="notificationDropdown" class="hidden absolute right-4 top-16 bg-white rounded-lg shadow-2xl w-96 max-h-96 overflow-y-auto z-50">
+                        <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+                            <h3 class="font-bold text-lg" style="color: var(--deep-charcoal);">Recent Notifications</h3>
+                            <button onclick="markAllAsRead()" class="text-sm text-blue-600 hover:text-blue-800">Mark all read</button>
+                        </div>
+                        <div id="dropdownNotifications" class="divide-y divide-gray-100">
+                            <div class="p-4 text-center text-gray-500 text-sm">No notifications</div>
+                        </div>
+                        <div class="p-3 border-t border-gray-200 text-center">
+                            <a href="{{ url_for('notifications') }}" class="text-sm font-medium hover:underline" style="color: var(--sage-green);">View All Notifications</a>
+                        </div>
+                    </div>
+
+                    <a href="#" class="px-6 py-2 bg-white text-green-700 rounded-lg font-medium hover:bg-gray-100 transition" style="color: var(--sage-green);">
+                        Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Header Section -->
+        <div class="mb-6">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold mb-2" style="color: var(--deep-charcoal);">Meal Planner</h1>
+                    <p class="text-gray-600">Plan your weekly meals and stay organized</p>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="flex gap-3">
+                    <button onclick="showSavePlanModal()" 
+                            class="px-4 py-2 rounded-lg text-white font-medium hover:opacity-90 transition"
+                            style="background-color: var(--sage-green);">
+                        <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
+                        </svg>
+                        Save Plan
+                    </button>
+                    <button onclick="showLoadPlanModal()" 
+                            class="px-4 py-2 rounded-lg font-medium border-2 hover:bg-gray-50 transition"
+                            style="color: var(--deep-charcoal); border-color: var(--deep-charcoal);">
+                        <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                        </svg>
+                        Load Plan
+                    </button>
+                    <button onclick="clearAllMeals()" 
+                            class="px-4 py-2 rounded-lg font-medium border-2 hover:bg-red-50 transition"
+                            style="color: #DC2626; border-color: #DC2626;">
+                        Clear All
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Current Plan Info -->
+        <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Current Meal Plan:</p>
+                    <p class="text-lg font-semibold" id="currentPlanName" style="color: var(--sage-green);">New Plan</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm text-gray-600">Week of:</p>
+                    <div class="flex items-center gap-2">
+                        <button onclick="previousWeek()" class="p-1 hover:bg-gray-100 rounded">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                        </button>
+                        <p class="text-lg font-semibold" id="weekDisplay" style="color: var(--deep-charcoal);">Nov 19 - Nov 25, 2025</p>
+                        <button onclick="nextWeek()" class="p-1 hover:bg-gray-100 rounded">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weekly Calendar Grid -->
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr style="background-color: var(--sage-green);">
+                            <th class="py-4 px-4 text-white font-semibold text-left w-32">Meal Time</th>
+                            <th class="py-4 px-4 text-white font-semibold text-center">Monday</th>
+                            <th class="py-4 px-4 text-white font-semibold text-center">Tuesday</th>
+                            <th class="py-4 px-4 text-white font-semibold text-center">Wednesday</th>
+                            <th class="py-4 px-4 text-white font-semibold text-center">Thursday</th>
+                            <th class="py-4 px-4 text-white font-semibold text-center">Friday</th>
+                            <th class="py-4 px-4 text-white font-semibold text-center">Saturday</th>
+                            <th class="py-4 px-4 text-white font-semibold text-center">Sunday</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Breakfast Row -->
+                        <tr class="border-b border-gray-200">
+                            <td class="py-4 px-4 font-semibold bg-gray-50" style="color: var(--deep-charcoal);">
+                                <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                                </svg>
+                                Breakfast
+                            </td>
+                            <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" onclick="addRecipe('monday', 'breakfast')" id="monday-breakfast"></div></td>
+                            <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" onclick="addRecipe('tuesday', 'breakfast')" id="tuesday-breakfast"></div></td>
+                            <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" onclick="addRecipe('wednesday', 'breakfast')" id="wednesday-breakfast"></div></td>
+                            <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" onclick="addRecipe('thursday', 'breakfast')" id="thursday-breakfast"></div></td>
+                            <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" onclick="addRecipe('friday', 'breakfast')" id="friday-breakfast"></div></td>
+                            <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" onclick="addRecipe('saturday', 'breakfast')" id="saturday-breakfast"></div></td>
+                            <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" onclick="addRecipe('sunday', 'breakfast')" id="sunday-breakfast"></div></td>
+                        </tr>
+                        
+                        <!-- Lunch Row -->
+                        <tr class="border-b border-gray-200">
+                            <td class="py-4 px-4 font-semibold bg-gray-50" style="color: var(--deep-charcoal);">
+                                <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Lunch
+                            </td>
+                            <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" onclick="addRecipe('monday', 'lunch')" id="monday-lunch"></div></td>
+                            <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" onclick="addRecipe('tuesday', 'lunch')" id="tuesday-lunch"></div></td>
+                            <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" onclick="addRecipe('wednesday', 'lunch')" id="wednesday-lunch"></div></td>
+                            <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" onclick="addRecipe('thursday', 'lunch')" id="thursday-lunch"></div></td>
+                            <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" onclick="addRecipe('friday', 'lunch')" id="friday-lunch"></div></td>
+                            <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" onclick="addRecipe('saturday', 'lunch')" id="saturday-lunch"></div></td>
+                            <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" onclick="addRecipe('sunday', 'lunch')" id="sunday-lunch"></div></td>
+                        </tr>
+                        
+                        <!-- Dinner Row -->
+                        <tr>
+                            <td class="py-4 px-4 font-semibold bg-gray-50" style="color: var(--deep-charcoal);">
+                                <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                                </svg>
+                                Dinner
+                            </td>
+                            <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" onclick="addRecipe('monday', 'dinner')" id="monday-dinner"></div></td>
+                            <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" onclick="addRecipe('tuesday', 'dinner')" id="tuesday-dinner"></div></td>
+                            <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" onclick="addRecipe('wednesday', 'dinner')" id="wednesday-dinner"></div></td>
+                            <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" onclick="addRecipe('thursday', 'dinner')" id="thursday-dinner"></div></td>
+                            <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" onclick="addRecipe('friday', 'dinner')" id="friday-dinner"></div></td>
+                            <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" onclick="addRecipe('saturday', 'dinner')" id="saturday-dinner"></div></td>
+                            <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" onclick="addRecipe('sunday', 'dinner')" id="sunday-dinner"></div></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Shopping List Section -->
+        <div class="mt-6 bg-white rounded-lg shadow-lg p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold" style="color: var(--deep-charcoal);">
+                    <svg class="w-6 h-6 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    Shopping List
+                </h2>
+                <a href="{{ url_for('shopping_list') }}" 
+                   class="px-4 py-2 rounded-lg text-white font-medium hover:opacity-90 transition"
+                   style="background-color: var(--terracotta);">
+                    View Shopping List
+                </a>
+            </div>
+            <div class="text-gray-600">
+                <p class="italic">Click "View Shopping List" to see a detailed shopping list with automatic ingredient aggregation and smart categorization from your weekly meal plan.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Recipe Modal -->
+    <div id="addRecipeModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold" style="color: var(--deep-charcoal);">Add Recipe</h2>
+                <button onclick="closeAddRecipeModal()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="mb-4">
+                <input type="text" 
+                       id="recipeSearch"
+                       placeholder="Search recipes..."
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                       style="focus:ring-color: var(--sage-green);">
+            </div>
+
+            <div id="recipeList" class="space-y-3">
+                <!-- Sample recipes -->
+                <div class="recipe-item border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition" onclick="selectRecipe('Avocado Toast')">
+                    <h3 class="font-semibold" style="color: var(--deep-charcoal);">Avocado Toast</h3>
+                    <p class="text-sm text-gray-600">Quick breakfast • 10 mins</p>
+                </div>
+                <div class="recipe-item border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition" onclick="selectRecipe('Greek Salad')">
+                    <h3 class="font-semibold" style="color: var(--deep-charcoal);">Greek Salad</h3>
+                    <p class="text-sm text-gray-600">Healthy lunch • 15 mins</p>
+                </div>
+                <div class="recipe-item border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition" onclick="selectRecipe('Grilled Chicken Pasta')">
+                    <h3 class="font-semibold" style="color: var(--deep-charcoal);">Grilled Chicken Pasta</h3>
+                    <p class="text-sm text-gray-600">Dinner favorite • 30 mins</p>
+                </div>
+                <div class="recipe-item border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition" onclick="selectRecipe('Smoothie Bowl')">
+                    <h3 class="font-semibold" style="color: var(--deep-charcoal);">Smoothie Bowl</h3>
+                    <p class="text-sm text-gray-600">Energizing breakfast • 5 mins</p>
+                </div>
+                <div class="recipe-item border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition" onclick="selectRecipe('Beef Stir Fry')">
+                    <h3 class="font-semibold" style="color: var(--deep-charcoal);">Beef Stir Fry</h3>
+                    <p class="text-sm text-gray-600">Quick dinner • 25 mins</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Save Plan Modal -->
+    <div id="savePlanModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+            <h2 class="text-2xl font-bold mb-4" style="color: var(--deep-charcoal);">Save Meal Plan</h2>
+            
+            <form onsubmit="saveMealPlan(event)">
+                <div class="mb-4">
+                    <label for="planName" class="block text-sm font-medium mb-2" style="color: var(--deep-charcoal);">
+                        Plan Name <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" 
+                           id="planName" 
+                           required
+                           placeholder="e.g., Healthy Week, Family Plan"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                           style="focus:ring-color: var(--sage-green);">
+                </div>
+                
+                <div class="mb-6">
+                    <label for="planDescription" class="block text-sm font-medium mb-2" style="color: var(--deep-charcoal);">
+                        Description (optional)
+                    </label>
+                    <textarea id="planDescription" 
+                              rows="3"
+                              placeholder="Add notes about this meal plan..."
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 resize-none"
+                              style="focus:ring-color: var(--sage-green);"></textarea>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button type="submit" 
+                            class="flex-1 px-4 py-2 rounded-lg text-white font-medium hover:opacity-90 transition"
+                            style="background-color: var(--sage-green);">
+                        Save Plan
+                    </button>
+                    <button type="button" 
+                            onclick="closeSavePlanModal()"
+                            class="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Load Plan Modal -->
+    <div id="loadPlanModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold" style="color: var(--deep-charcoal);">Load Meal Plan</h2>
+                <button onclick="closeLoadPlanModal()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div id="savedPlansList" class="space-y-3">
+                <!-- Sample saved plans -->
+                <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition" onclick="loadMealPlan('Healthy Week')">
+                    <h3 class="font-semibold" style="color: var(--deep-charcoal);">Healthy Week</h3>
+                    <p class="text-sm text-gray-600">Nutritious meals for the week</p>
+                    <p class="text-xs text-gray-500 mt-1">Saved: Nov 15, 2025</p>
+                </div>
+                <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition" onclick="loadMealPlan('Family Plan')">
+                    <h3 class="font-semibold" style="color: var(--deep-charcoal);">Family Plan</h3>
+                    <p class="text-sm text-gray-600">Kid-friendly meals</p>
+                    <p class="text-xs text-gray-500 mt-1">Saved: Nov 12, 2025</p>
+                </div>
+                <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition" onclick="loadMealPlan('Quick & Easy')">
+                    <h3 class="font-semibold" style="color: var(--deep-charcoal);">Quick & Easy</h3>
+                    <p class="text-sm text-gray-600">Fast meals for busy weeks</p>
+                    <p class="text-xs text-gray-500 mt-1">Saved: Nov 10, 2025</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State management
+        let currentDay = '';
+        let currentMealTime = '';
+        let mealPlan = {};
+        let currentWeekStart = new Date(2025, 10, 19); // Nov 19, 2025
+
+        // Initialize
+        updateWeekDisplay();
+
+        function updateWeekDisplay() {
+            const weekEnd = new Date(currentWeekStart);
+            weekEnd.setDate(weekEnd.getDate() + 6);
+            
+            const options = { month: 'short', day: 'numeric' };
+            const startStr = currentWeekStart.toLocaleDateString('en-US', options);
+            const endStr = weekEnd.toLocaleDateString('en-US', options);
+            const year = currentWeekStart.getFullYear();
+            
+            document.getElementById('weekDisplay').textContent = `${startStr} - ${endStr}, ${year}`;
+        }
+
+        function previousWeek() {
+            currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+            updateWeekDisplay();
+        }
+
+        function nextWeek() {
+            currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+            updateWeekDisplay();
+        }
+
+        function addRecipe(day, mealTime) {
+            currentDay = day;
+            currentMealTime = mealTime;
+            document.getElementById('addRecipeModal').classList.remove('hidden');
+        }
+
+        function closeAddRecipeModal() {
+            document.getElementById('addRecipeModal').classList.add('hidden');
+            document.getElementById('recipeSearch').value = '';
+        }
+
+        function selectRecipe(recipeName) {
+            const slotId = `${currentDay}-${currentMealTime}`;
+            const slot = document.getElementById(slotId);
+            
+            slot.innerHTML = `
+                <div class="recipe-card flex items-center justify-between">
+                    <div class="flex-1">
+                        <p class="font-semibold text-gray-800">${recipeName}</p>
+                    </div>
+                    <button onclick="removeRecipe(event, '${currentDay}', '${currentMealTime}')" 
+                            class="ml-2 text-red-500 hover:text-red-700">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            `;
+            
+            slot.classList.add('has-recipe');
+            
+            // Store in meal plan
+            if (!mealPlan[currentDay]) mealPlan[currentDay] = {};
+            mealPlan[currentDay][currentMealTime] = recipeName;
+            
+            closeAddRecipeModal();
+        }
+
+        function removeRecipe(event, day, mealTime) {
+            event.stopPropagation();
+            const slotId = `${day}-${mealTime}`;
+            const slot = document.getElementById(slotId);
+            slot.innerHTML = '';
+            slot.classList.remove('has-recipe');
+            
+            // Remove from meal plan
+            if (mealPlan[day]) {
+                delete mealPlan[day][mealTime];
+            }
+        }
+
+        function clearAllMeals() {
+            if (!confirm('Are you sure you want to clear all meals from the calendar?')) return;
+            
+            const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+            const mealTimes = ['breakfast', 'lunch', 'dinner'];
+            
+            days.forEach(day => {
+                mealTimes.forEach(mealTime => {
+                    const slotId = `${day}-${mealTime}`;
+                    const slot = document.getElementById(slotId);
+                    slot.innerHTML = '';
+                    slot.classList.remove('has-recipe');
+                });
+            });
+            
+            mealPlan = {};
+            document.getElementById('currentPlanName').textContent = 'New Plan';
+        }
+
+        function showSavePlanModal() {
+            document.getElementById('savePlanModal').classList.remove('hidden');
+        }
+
+        function closeSavePlanModal() {
+            document.getElementById('savePlanModal').classList.add('hidden');
+            document.getElementById('planName').value = '';
+            document.getElementById('planDescription').value = '';
+        }
+
+        function saveMealPlan(event) {
+            event.preventDefault();
+            const planName = document.getElementById('planName').value;
+            const planDescription = document.getElementById('planDescription').value;
+            
+            // In a real application, this would save to a backend
+            console.log('Saving meal plan:', { name: planName, description: planDescription, meals: mealPlan });
+            
+            document.getElementById('currentPlanName').textContent = planName;
+            alert(`Meal plan "${planName}" saved successfully!`);
+            closeSavePlanModal();
+        }
+
+        function showLoadPlanModal() {
+            document.getElementById('loadPlanModal').classList.remove('hidden');
+        }
+
+        function closeLoadPlanModal() {
+            document.getElementById('loadPlanModal').classList.add('hidden');
+        }
+
+        function loadMealPlan(planName) {
+            // In a real application, this would load from a backend
+            alert(`Loading meal plan: ${planName}`);
+            document.getElementById('currentPlanName').textContent = planName;
+            closeLoadPlanModal();
+            
+            // Demo: Load some sample data
+            if (planName === 'Healthy Week') {
+                clearAllMeals();
+                // Add some sample recipes
+                setTimeout(() => {
+                    currentDay = 'monday';
+                    currentMealTime = 'breakfast';
+                    selectRecipe('Smoothie Bowl');
+                    currentDay = 'tuesday';
+                    currentMealTime = 'lunch';
+                    selectRecipe('Greek Salad');
+                }, 100);
+            }
+        }
+
+        function generateShoppingList() {
+            // Redirect to dedicated shopping list page
+            window.location.href = 'shopping_list.html';
+        }
+
+        function exportShoppingList() {
+            // Redirect to dedicated shopping list page
+            window.location.href = 'shopping_list.html';
+        }
+
+        // Recipe search functionality
+        document.getElementById('recipeSearch')?.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const recipeItems = document.querySelectorAll('.recipe-item');
+            
+            recipeItems.forEach(item => {
+                const recipeName = item.querySelector('h3').textContent.toLowerCase();
+                if (recipeName.includes(searchTerm)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+
+        // Close modals when clicking outside
+        document.getElementById('addRecipeModal').addEventListener('click', function(e) {
+            if (e.target === this) closeAddRecipeModal();
+        });
+
+        document.getElementById('savePlanModal').addEventListener('click', function(e) {
+            if (e.target === this) closeSavePlanModal();
+        });
+
+        document.getElementById('loadPlanModal').addEventListener('click', function(e) {
+            if (e.target === this) closeLoadPlanModal();
+        });
+
+        // Notification dropdown functionality
+        function toggleNotificationDropdown() {
+            const dropdown = document.getElementById('notificationDropdown');
+            dropdown.classList.toggle('hidden');
+        }
+
+        function markAllAsRead() {
+            const badge = document.getElementById('navBadge');
+            badge.classList.add('hidden');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('notificationDropdown');
+            const button = event.target.closest('button');
+            
+            if (!dropdown.contains(event.target) && (!button || !button.onclick || button.onclick.toString().indexOf('toggleNotificationDropdown') === -1)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+    </script>
+    </div>
+</body>
+</html>
