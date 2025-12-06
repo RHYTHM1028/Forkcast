@@ -227,20 +227,540 @@ def profile():
     cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute('SELECT * FROM users WHERE id = %s', (session['user_id'],))
     user = cur.fetchone()
+    
+    # Get user stats
+    cur.execute('SELECT COUNT(*) as count FROM recipes WHERE user_id = %s', (session['user_id'],))
+    recipes_count = cur.fetchone()['count']
+    
+    cur.execute('SELECT COUNT(*) as count FROM recipes WHERE user_id = %s AND is_favorite = true', (session['user_id'],))
+    favorites_count = cur.fetchone()['count']
+    
     cur.close()
     conn.close()
-    return render_template('profile_template.html', user=user)
+    return render_template('profile_template.html', user=user, recipes_count=recipes_count, favorites_count=favorites_count)
 
-@app.route('/recipes')
+@app.route('/edit-profile', methods=['GET', 'POST'])
 @login_required
-def recipes():
+def edit_profile():
+    if request.method == 'POST':
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json
+        
+        full_name = request.form.get('full_name', '').strip()
+        email = request.form.get('email', '').strip()
+        bio = request.form.get('bio', '').strip()
+        
+        if not email:
+            message = 'Email is required.'
+            if is_ajax:
+                return jsonify({'success': False, 'message': message})
+            flash(message, 'error')
+            return redirect(url_for('edit_profile'))
+        
+        # Check if email is already taken by another user
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        
+        cur.execute('SELECT id FROM users WHERE email = %s AND id != %s', (email, session['user_id']))
+        existing_user = cur.fetchone()
+        
+        if existing_user:
+            cur.close()
+            conn.close()
+            message = 'Email already exists.'
+            if is_ajax:
+                return jsonify({'success': False, 'message': message})
+            flash(message, 'error')
+            return redirect(url_for('edit_profile'))
+        
+        # Update user profile
+        try:
+            cur.execute('''
+                UPDATE users 
+                SET full_name = %s, email = %s, bio = %s, updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s
+            ''', (full_name, email, bio, session['user_id']))
+            conn.commit()
+            
+            if is_ajax:
+                return jsonify({'success': True, 'message': 'Profile updated successfully!'})
+            
+            flash('Profile updated successfully!', 'success')
+            return redirect(url_for('profile'))
+            
+        except Exception as e:
+            conn.rollback()
+            message = 'An error occurred. Please try again.'
+            print(f"Error: {e}")
+            if is_ajax:
+                return jsonify({'success': False, 'message': message})
+            flash(message, 'error')
+        finally:
+            cur.close()
+            conn.close()
+    
+    # GET request - show form
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute('SELECT * FROM users WHERE id = %s', (session['user_id'],))
     user = cur.fetchone()
     cur.close()
     conn.close()
-    return render_template('recipe.html', user=user)
+    return render_template('edit_profile_template.html', user=user)
+
+@app.route('/change-password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    if request.method == 'POST':
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json
+        
+        current_password = request.form.get('current_password', '').strip()
+        new_password = request.form.get('new_password', '').strip()
+        confirm_password = request.form.get('confirm_password', '').strip()
+        
+        if not current_password or not new_password or not confirm_password:
+            message = 'All fields are required.'
+            if is_ajax:
+                return jsonify({'success': False, 'message': message})
+            flash(message, 'error')
+            return redirect(url_for('change_password'))
+        
+        if new_password != confirm_password:
+            message = 'New passwords do not match.'
+            if is_ajax:
+                return jsonify({'success': False, 'message': message})
+            flash(message, 'error')
+            return redirect(url_for('change_password'))
+        
+        if len(new_password) < 6:
+            message = 'Password must be at least 6 characters long.'
+            if is_ajax:
+                return jsonify({'success': False, 'message': message})
+            flash(message, 'error')
+            return redirect(url_for('change_password'))
+        
+        # Verify current password
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        
+        cur.execute('SELECT password_hash FROM users WHERE id = %s', (session['user_id'],))
+        user = cur.fetchone()
+        
+        if not user or not check_password_hash(user['password_hash'], current_password):
+            cur.close()
+            conn.close()
+            message = 'Current password is incorrect.'
+            if is_ajax:
+                return jsonify({'success': False, 'message': message})
+            flash(message, 'error')
+            return redirect(url_for('change_password'))
+        
+        # Update password
+        try:
+            new_password_hash = generate_password_hash(new_password)
+            cur.execute('''
+                UPDATE users 
+                SET password_hash = %s, updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s
+            ''', (new_password_hash, session['user_id']))
+            conn.commit()
+            
+            if is_ajax:
+                return jsonify({'success': True, 'message': 'Password changed successfully!'})
+            
+            flash('Password changed successfully!', 'success')
+            return redirect(url_for('profile'))
+            
+        except Exception as e:
+            conn.rollback()
+            message = 'An error occurred. Please try again.'
+            print(f"Error: {e}")
+            if is_ajax:
+                return jsonify({'success': False, 'message': message})
+            flash(message, 'error')
+        finally:
+            cur.close()
+            conn.close()
+    
+    # GET request - show form
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    cur.execute('SELECT * FROM users WHERE id = %s', (session['user_id'],))
+    user = cur.fetchone()
+    cur.close()
+    conn.close()
+    return render_template('change_password_template.html', user=user)
+
+@app.route('/recipes')
+@login_required
+def recipes():
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    # Get all public recipes with ratings and author info
+    cur.execute('''
+        SELECT r.*, r.calories_per_serving as calories, u.username, u.full_name,
+               COALESCE(AVG(rr.rating), 0) as avg_rating,
+               COUNT(DISTINCT rr.id) as rating_count
+        FROM recipes r
+        JOIN users u ON r.user_id = u.id
+        LEFT JOIN recipe_ratings rr ON r.id = rr.recipe_id
+        WHERE r.is_public = true
+        GROUP BY r.id, u.username, u.full_name
+        ORDER BY r.created_at DESC
+    ''')
+    all_recipes = cur.fetchall()
+    
+    cur.execute('SELECT * FROM users WHERE id = %s', (session['user_id'],))
+    user = cur.fetchone()
+    
+    cur.close()
+    conn.close()
+    return render_template('recipe.html', user=user, recipes=all_recipes)
+
+@app.route('/my-recipes')
+@login_required
+def my_recipes():
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    # Get user's recipes
+    cur.execute('''
+        SELECT r.*, r.calories_per_serving as calories,
+               COALESCE(AVG(rr.rating), 0) as avg_rating,
+               COUNT(DISTINCT rr.id) as rating_count
+        FROM recipes r
+        LEFT JOIN recipe_ratings rr ON r.id = rr.recipe_id
+        WHERE r.user_id = %s
+        GROUP BY r.id
+        ORDER BY r.created_at DESC
+    ''', (session['user_id'],))
+    user_recipes = cur.fetchall()
+    
+    cur.execute('SELECT * FROM users WHERE id = %s', (session['user_id'],))
+    user = cur.fetchone()
+    
+    cur.close()
+    conn.close()
+    return render_template('my_recipes.html', user=user, recipes=user_recipes)
+
+@app.route('/api/recipes', methods=['GET'])
+@login_required
+def get_recipes():
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    recipe_type = request.args.get('type', 'all')
+    
+    if recipe_type == 'my':
+        cur.execute('''
+            SELECT r.*, r.calories_per_serving as calories,
+                   COALESCE(AVG(rr.rating), 0) as avg_rating,
+                   COUNT(DISTINCT rr.id) as rating_count
+            FROM recipes r
+            LEFT JOIN recipe_ratings rr ON r.id = rr.recipe_id
+            WHERE r.user_id = %s
+            GROUP BY r.id
+            ORDER BY r.created_at DESC
+        ''', (session['user_id'],))
+    else:
+        cur.execute('''
+            SELECT r.*, r.calories_per_serving as calories, u.username, u.full_name,
+                   COALESCE(AVG(rr.rating), 0) as avg_rating,
+                   COUNT(DISTINCT rr.id) as rating_count
+            FROM recipes r
+            JOIN users u ON r.user_id = u.id
+            LEFT JOIN recipe_ratings rr ON r.id = rr.recipe_id
+            WHERE r.is_public = true
+            GROUP BY r.id, u.username, u.full_name
+            ORDER BY r.created_at DESC
+        ''')
+    
+    recipes = cur.fetchall()
+    cur.close()
+    conn.close()
+    
+    return jsonify({'success': True, 'recipes': recipes})
+
+@app.route('/api/recipes/<int:recipe_id>', methods=['GET'])
+@login_required
+def get_recipe(recipe_id):
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    cur.execute('''
+        SELECT r.*, r.calories_per_serving as calories, u.username, u.full_name,
+               COALESCE(AVG(rr.rating), 0) as avg_rating,
+               COUNT(DISTINCT rr.id) as rating_count
+        FROM recipes r
+        JOIN users u ON r.user_id = u.id
+        LEFT JOIN recipe_ratings rr ON r.id = rr.recipe_id
+        WHERE r.id = %s
+        GROUP BY r.id, u.username, u.full_name
+    ''', (recipe_id,))
+    recipe = cur.fetchone()
+    
+    if not recipe:
+        cur.close()
+        conn.close()
+        return jsonify({'success': False, 'message': 'Recipe not found'}), 404
+    
+    # Get user's rating if exists
+    cur.execute('SELECT rating, review FROM recipe_ratings WHERE recipe_id = %s AND user_id = %s', 
+                (recipe_id, session['user_id']))
+    user_rating = cur.fetchone()
+    
+    cur.close()
+    conn.close()
+    
+    return jsonify({
+        'success': True, 
+        'recipe': recipe,
+        'user_rating': user_rating
+    })
+
+@app.route('/api/recipes', methods=['POST'])
+@login_required
+def create_recipe():
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json
+    
+    title = request.form.get('title', '').strip()
+    description = request.form.get('description', '').strip()
+    ingredients = request.form.get('ingredients', '').strip()
+    instructions = request.form.get('instructions', '').strip()
+    prep_time = request.form.get('prep_time')
+    cook_time = request.form.get('cook_time')
+    servings = request.form.get('servings')
+    calories = request.form.get('calories_per_serving')
+    category = request.form.get('category', '').strip()
+    cuisine = request.form.get('cuisine', '').strip()
+    difficulty = request.form.get('difficulty', '').strip()
+    is_public = request.form.get('is_public', 'true') == 'true'
+    
+    if not title or not ingredients or not instructions:
+        message = 'Title, ingredients, and instructions are required.'
+        if is_ajax:
+            return jsonify({'success': False, 'message': message})
+        flash(message, 'error')
+        return redirect(url_for('my_recipes'))
+    
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    try:
+        cur.execute('''
+            INSERT INTO recipes (user_id, title, description, ingredients, instructions,
+                               prep_time, cook_time, servings, calories_per_serving,
+                               category, cuisine, difficulty, is_public)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING id
+        ''', (session['user_id'], title, description, ingredients, instructions,
+              prep_time, cook_time, servings, calories, category, cuisine, difficulty, is_public))
+        
+        recipe_id = cur.fetchone()['id']
+        conn.commit()
+        
+        if is_ajax:
+            return jsonify({'success': True, 'message': 'Recipe created successfully!', 'recipe_id': recipe_id})
+        
+        flash('Recipe created successfully!', 'success')
+        return redirect(url_for('my_recipes'))
+        
+    except Exception as e:
+        conn.rollback()
+        message = 'An error occurred. Please try again.'
+        print(f"Error: {e}")
+        if is_ajax:
+            return jsonify({'success': False, 'message': message})
+        flash(message, 'error')
+    finally:
+        cur.close()
+        conn.close()
+    
+    return redirect(url_for('my_recipes'))
+
+@app.route('/api/recipes/<int:recipe_id>', methods=['PUT', 'POST'])
+@login_required
+def update_recipe(recipe_id):
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json
+    
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    # Check if user owns this recipe
+    cur.execute('SELECT user_id FROM recipes WHERE id = %s', (recipe_id,))
+    recipe = cur.fetchone()
+    
+    if not recipe or recipe['user_id'] != session['user_id']:
+        cur.close()
+        conn.close()
+        message = 'Recipe not found or you do not have permission to edit it.'
+        if is_ajax:
+            return jsonify({'success': False, 'message': message}), 403
+        flash(message, 'error')
+        return redirect(url_for('my_recipes'))
+    
+    title = request.form.get('title', '').strip()
+    description = request.form.get('description', '').strip()
+    ingredients = request.form.get('ingredients', '').strip()
+    instructions = request.form.get('instructions', '').strip()
+    prep_time = request.form.get('prep_time')
+    cook_time = request.form.get('cook_time')
+    servings = request.form.get('servings')
+    calories = request.form.get('calories_per_serving')
+    category = request.form.get('category', '').strip()
+    cuisine = request.form.get('cuisine', '').strip()
+    difficulty = request.form.get('difficulty', '').strip()
+    is_public = request.form.get('is_public', 'true') == 'true'
+    
+    try:
+        cur.execute('''
+            UPDATE recipes 
+            SET title = %s, description = %s, ingredients = %s, instructions = %s,
+                prep_time = %s, cook_time = %s, servings = %s, calories_per_serving = %s,
+                category = %s, cuisine = %s, difficulty = %s, is_public = %s,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s
+        ''', (title, description, ingredients, instructions, prep_time, cook_time,
+              servings, calories, category, cuisine, difficulty, is_public, recipe_id))
+        
+        conn.commit()
+        
+        if is_ajax:
+            return jsonify({'success': True, 'message': 'Recipe updated successfully!'})
+        
+        flash('Recipe updated successfully!', 'success')
+        return redirect(url_for('my_recipes'))
+        
+    except Exception as e:
+        conn.rollback()
+        message = 'An error occurred. Please try again.'
+        print(f"Error: {e}")
+        if is_ajax:
+            return jsonify({'success': False, 'message': message})
+        flash(message, 'error')
+    finally:
+        cur.close()
+        conn.close()
+    
+    return redirect(url_for('my_recipes'))
+
+@app.route('/api/recipes/<int:recipe_id>', methods=['DELETE'])
+@login_required
+def delete_recipe(recipe_id):
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    # Check if user owns this recipe
+    cur.execute('SELECT user_id, title FROM recipes WHERE id = %s', (recipe_id,))
+    recipe = cur.fetchone()
+    
+    if not recipe or recipe['user_id'] != session['user_id']:
+        cur.close()
+        conn.close()
+        return jsonify({'success': False, 'message': 'Recipe not found or you do not have permission to delete it.'}), 403
+    
+    try:
+        cur.execute('DELETE FROM recipes WHERE id = %s', (recipe_id,))
+        conn.commit()
+        
+        return jsonify({'success': True, 'message': f'Recipe "{recipe["title"]}" deleted successfully!'})
+        
+    except Exception as e:
+        conn.rollback()
+        print(f"Error: {e}")
+        return jsonify({'success': False, 'message': 'An error occurred. Please try again.'}), 500
+    finally:
+        cur.close()
+        conn.close()
+
+@app.route('/api/recipes/<int:recipe_id>/rate', methods=['POST'])
+@login_required
+def rate_recipe(recipe_id):
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json
+    
+    rating = request.form.get('rating')
+    review = request.form.get('review', '').strip()
+    
+    if not rating or not rating.isdigit() or int(rating) < 1 or int(rating) > 5:
+        message = 'Rating must be between 1 and 5.'
+        if is_ajax:
+            return jsonify({'success': False, 'message': message})
+        flash(message, 'error')
+        return redirect(url_for('recipes'))
+    
+    rating = int(rating)
+    
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    # Check if recipe exists and is not owned by current user
+    cur.execute('SELECT user_id FROM recipes WHERE id = %s', (recipe_id,))
+    recipe = cur.fetchone()
+    
+    if not recipe:
+        cur.close()
+        conn.close()
+        message = 'Recipe not found.'
+        if is_ajax:
+            return jsonify({'success': False, 'message': message}), 404
+        flash(message, 'error')
+        return redirect(url_for('recipes'))
+    
+    if recipe['user_id'] == session['user_id']:
+        cur.close()
+        conn.close()
+        message = 'You cannot rate your own recipe.'
+        if is_ajax:
+            return jsonify({'success': False, 'message': message})
+        flash(message, 'error')
+        return redirect(url_for('recipes'))
+    
+    try:
+        # Insert or update rating
+        cur.execute('''
+            INSERT INTO recipe_ratings (recipe_id, user_id, rating, review)
+            VALUES (%s, %s, %s, %s)
+            ON CONFLICT (recipe_id, user_id) 
+            DO UPDATE SET rating = EXCLUDED.rating, 
+                         review = EXCLUDED.review,
+                         updated_at = CURRENT_TIMESTAMP
+        ''', (recipe_id, session['user_id'], rating, review))
+        
+        conn.commit()
+        
+        # Get updated average rating
+        cur.execute('''
+            SELECT COALESCE(AVG(rating), 0) as avg_rating,
+                   COUNT(*) as rating_count
+            FROM recipe_ratings
+            WHERE recipe_id = %s
+        ''', (recipe_id,))
+        
+        result = cur.fetchone()
+        
+        if is_ajax:
+            return jsonify({
+                'success': True, 
+                'message': 'Rating submitted successfully!',
+                'avg_rating': float(result['avg_rating']),
+                'rating_count': result['rating_count']
+            })
+        
+        flash('Rating submitted successfully!', 'success')
+        return redirect(url_for('recipes'))
+        
+    except Exception as e:
+        conn.rollback()
+        message = 'An error occurred. Please try again.'
+        print(f"Error: {e}")
+        if is_ajax:
+            return jsonify({'success': False, 'message': message})
+        flash(message, 'error')
+    finally:
+        cur.close()
+        conn.close()
+    
+    return redirect(url_for('recipes'))
 
 @app.route('/calendar')
 @login_required

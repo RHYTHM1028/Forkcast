@@ -220,26 +220,24 @@
 
                 <!-- Profile Information -->
                 <div class="flex-1 text-center md:text-left">
-                    <h1 class="text-3xl font-bold mb-2" style="color: var(--deep-charcoal);">John Doe</h1>
-                    <p class="text-gray-600 mb-1">@johndoe</p>
-                    <p class="text-gray-600 mb-4">john@example.com</p>
+                    <h1 class="text-3xl font-bold mb-2" style="color: var(--deep-charcoal);">{{ user.full_name or 'No Name' }}</h1>
+                    <p class="text-gray-600 mb-1">@{{ user.username }}</p>
+                    <p class="text-gray-600 mb-4">{{ user.email }}</p>
                     
-                    <p class="text-gray-700 mb-6">Love cooking healthy meals and sharing my favorite recipes with the community!</p>
+                    <p class="text-gray-700 mb-6">{{ user.bio or 'No bio added yet.' }}</p>
 
                     <div class="text-sm text-gray-500 mb-6">
-                        Member since January 2024
+                        Member since {{ user.created_at.strftime('%B %Y') if user.created_at else 'Unknown' }}
                     </div>
 
                     <!-- Action Buttons -->
                     <div class="flex flex-wrap gap-3 justify-center md:justify-start">
-                        <a href="#edit-profile" 
-                           onclick="showEditProfile(event)"
+                        <a href="{{ url_for('edit_profile') }}" 
                            class="px-6 py-2 rounded-lg text-white font-medium hover:opacity-90 transition"
                            style="background-color: var(--sage-green);">
                             Edit Profile
                         </a>
-                        <a href="#change-password" 
-                           onclick="showChangePassword(event)"
+                        <a href="{{ url_for('change_password') }}" 
                            class="px-6 py-2 rounded-lg text-white font-medium hover:opacity-90 transition"
                            style="background-color: var(--terracotta);">
                             Change Password
@@ -252,15 +250,15 @@
             <div class="mt-8 pt-8 border-t border-gray-200">
                 <div class="grid grid-cols-3 gap-4 text-center">
                     <div>
-                        <p class="text-2xl font-bold" style="color: var(--sage-green);">24</p>
+                        <p class="text-2xl font-bold" style="color: var(--sage-green);">{{ recipes_count or 0 }}</p>
                         <p class="text-gray-600 text-sm">Recipes</p>
                     </div>
                     <div>
-                        <p class="text-2xl font-bold" style="color: var(--sage-green);">156</p>
+                        <p class="text-2xl font-bold" style="color: var(--sage-green);">{{ favorites_count or 0 }}</p>
                         <p class="text-gray-600 text-sm">Favorites</p>
                     </div>
                     <div>
-                        <p class="text-2xl font-bold" style="color: var(--sage-green);">89</p>
+                        <p class="text-2xl font-bold" style="color: var(--sage-green);">0</p>
                         <p class="text-gray-600 text-sm">Followers</p>
                     </div>
                 </div>
@@ -329,15 +327,7 @@
             hideDeleteModal();
         }
 
-        function showEditProfile(e) {
-            e.preventDefault();
-            alert('Edit Profile page would open here.');
-        }
 
-        function showChangePassword(e) {
-            e.preventDefault();
-            alert('Change Password page would open here.');
-        }
 
         // Close modal when clicking outside
         document.getElementById('deleteModal').addEventListener('click', function(e) {
