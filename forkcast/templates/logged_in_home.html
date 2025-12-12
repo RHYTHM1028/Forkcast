@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome - Forkcast</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --sage-green: #4A7C59;
+            --terracotta: #E07A5F;
+            --eggshell: #F4F1DE;
+            --white: #FFFFFF;
+            --deep-charcoal: #3D405B;
+        }
+
+        /* Sidebar Navigation Styles */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            width: 70px;
+            background-color: var(--sage-green);
+            transition: width 0.3s ease;
+            z-index: 1000;
+            overflow: hidden;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar:hover {
+            width: 250px;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            opacity: 0.5;
+            white-space: nowrap;
+        }
+
+        .sidebar-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-item.active {
+            opacity: 1;
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .sidebar-item svg {
+            min-width: 24px;
+            width: 24px;
+            height: 24px;
+            margin-right: 0;
+            transition: margin-right 0.3s ease;
+        }
+
+        .sidebar:hover .sidebar-item svg {
+            margin-right: 1rem;
+        }
+
+        .sidebar-label {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .sidebar:hover .sidebar-label {
+            opacity: 1;
+        }
+
+        .sidebar-logo {
+            padding: 1.5rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .sidebar-logo img {
+            width: 40px;
+            height: 40px;
+            min-width: 40px;
+        }
+
+        .sidebar-logo-text {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            white-space: nowrap;
+        }
+
+        .sidebar:hover .sidebar-logo-text {
+            opacity: 1;
+        }
+
+        .sidebar-footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .sidebar-footer .sidebar-item {
+            opacity: 0.5;
+        }
+
+        .sidebar-footer .sidebar-item:hover {
+            opacity: 1;
+        }
+
+        .main-content {
+            margin-left: 70px;
+            min-height: 100vh;
+            background: linear-gradient(135deg, rgba(244, 241, 222, 0.3) 0%, rgba(255, 255, 255, 0.5) 100%);
+        }
+
+        .welcome-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            border-radius: 20px;
+            padding: 2rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .welcome-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px 0 rgba(31, 38, 135, 0.25);
+        }
+
+        .quick-link {
+            background: linear-gradient(135deg, var(--sage-green) 0%, #3d6447 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(74, 124, 89, 0.3);
+        }
+
+        .quick-link:hover {
+            transform: translateX(10px);
+            box-shadow: 0 8px 25px rgba(74, 124, 89, 0.5);
+        }
+
+        .quick-link.terracotta {
+            background: linear-gradient(135deg, var(--terracotta) 0%, #c96850 100%);
+            box-shadow: 0 4px 15px rgba(224, 122, 95, 0.3);
+        }
+
+        .quick-link.terracotta:hover {
+            box-shadow: 0 8px 25px rgba(224, 122, 95, 0.5);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(244, 241, 222, 0.8) 100%);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="sidebar-logo">
+            <img src="/static/images/logo.png" alt="Forkcast Logo">
+            <span class="sidebar-logo-text"><span style="color: #E07A5F;">FORK</span><span style="color: #F4F1DE;">CAST</span></span>
+        </div>
+        
+        <a href="{{ url_for('main.logged_in_home') }}" class="sidebar-item active">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+            </svg>
+            <span class="sidebar-label">Home</span>
+        </a>
+        
+        <a href="{{ url_for('profile.dashboard') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 12a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1v-7z"></path>
+            </svg>
+            <span class="sidebar-label">Dashboard</span>
+        </a>
+        
+        <a href="{{ url_for('recipes.recipes') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+            </svg>
+            <span class="sidebar-label">Recipes</span>
+        </a>
+        
+        <a href="{{ url_for('calendar.calendar') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <span class="sidebar-label">Meal Planner</span>
+        </a>
+        
+        <a href="{{ url_for('calorie_tracker.calorie_tracker') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            <span class="sidebar-label">Calorie Tracker</span>
+        </a>
+        
+        <a href="{{ url_for('shopping_list.shopping_list') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            </svg>
+            <span class="sidebar-label">Shopping List</span>
+        </a>
+        
+        <a href="{{ url_for('notifications.notifications') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+            </svg>
+            <span class="sidebar-label">Notifications</span>
+        </a>
+        
+        <a href="{{ url_for('profile.profile') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+            </svg>
+            <span class="sidebar-label">Profile</span>
+        </a>
+        
+        <div class="sidebar-footer">
+            <a href="{{ url_for('auth.logout') }}" class="sidebar-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                </svg>
+                <span class="sidebar-label">Logout</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="container mx-auto px-8 py-12">
+            <!-- Welcome Header -->
+            <div class="welcome-card fade-in-up mb-8">
+                <h1 class="text-4xl font-bold mb-2" style="color: var(--deep-charcoal);">
+                    Welcome back, {% if user %}{{ user.full_name or user.username }}{% else %}Chef{% endif %}! 👋
+                </h1>
+                <p class="text-xl" style="color: var(--sage-green);">
+                    Ready to cook up something delicious today?
+                </p>
+            </div>
+
+            <!-- Quick Links Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <a href="{{ url_for('recipes.recipes') }}" class="quick-link fade-in-up" style="animation-delay: 0.1s;">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-8 h-8">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    </svg>
+                    <div>
+                        <h3 class="text-xl font-bold">Browse Recipes</h3>
+                        <p class="text-sm opacity-90">Find your next favorite dish</p>
+                    </div>
+                </a>
+
+                <a href="{{ url_for('calendar.calendar') }}" class="quick-link terracotta fade-in-up" style="animation-delay: 0.2s;">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-8 h-8">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    <div>
+                        <h3 class="text-xl font-bold">Plan Meals</h3>
+                        <p class="text-sm opacity-90">Organize your weekly menu</p>
+                    </div>
+                </a>
+
+                <a href="{{ url_for('shopping_list.shopping_list') }}" class="quick-link fade-in-up" style="animation-delay: 0.3s;">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-8 h-8">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    <div>
+                        <h3 class="text-xl font-bold">Shopping List</h3>
+                        <p class="text-sm opacity-90">Track ingredients to buy</p>
+                    </div>
+                </a>
+
+                <a href="{{ url_for('calorie_tracker.calorie_tracker') }}" class="quick-link terracotta fade-in-up" style="animation-delay: 0.4s;">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-8 h-8">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    <div>
+                        <h3 class="text-xl font-bold">Track Calories</h3>
+                        <p class="text-sm opacity-90">Monitor your nutrition</p>
+                    </div>
+                </a>
+
+                <a href="{{ url_for('profile.dashboard') }}" class="quick-link fade-in-up" style="animation-delay: 0.5s;">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-8 h-8">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 12a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1v-7z"></path>
+                    </svg>
+                    <div>
+                        <h3 class="text-xl font-bold">View Dashboard</h3>
+                        <p class="text-sm opacity-90">Check your analytics</p>
+                    </div>
+                </a>
+
+                <a href="{{ url_for('profile.profile') }}" class="quick-link terracotta fade-in-up" style="animation-delay: 0.6s;">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-8 h-8">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                    <div>
+                        <h3 class="text-xl font-bold">Your Profile</h3>
+                        <p class="text-sm opacity-90">Manage your account</p>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Stats Overview -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="stat-card text-center fade-in-up" style="animation-delay: 0.7s;">
+                    <div class="text-5xl font-bold mb-2" style="color: var(--sage-green);">0</div>
+                    <p class="text-lg" style="color: var(--deep-charcoal);">Saved Recipes</p>
+                </div>
+                
+                <div class="stat-card text-center fade-in-up" style="animation-delay: 0.8s;">
+                    <div class="text-5xl font-bold mb-2" style="color: var(--terracotta);">0</div>
+                    <p class="text-lg" style="color: var(--deep-charcoal);">Meals Planned</p>
+                </div>
+                
+                <div class="stat-card text-center fade-in-up" style="animation-delay: 0.9s;">
+                    <div class="text-5xl font-bold mb-2" style="color: var(--sage-green);">0</div>
+                    <p class="text-lg" style="color: var(--deep-charcoal);">Shopping Items</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

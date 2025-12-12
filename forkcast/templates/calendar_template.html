@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meal Planner - Forkcast</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --sage-green: #4A7C59;
+            --terracotta: #E07A5F;
+            --eggshell: #F4F1DE;
+            --white: #050404;
+            --deep-charcoal: #3D405B;
+        }
+        
+        .meal-slot {
+            min-height: 80px;
+            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(15px) saturate(180%);
+            -webkit-backdrop-filter: blur(15px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
+        .meal-slot:hover {
+            background: rgba(255, 255, 255, 0.85);
+            box-shadow: 0 8px 20px 0 rgba(31, 38, 135, 0.2);
+        }
+        
+        .meal-slot.has-recipe {
+            background: rgba(240, 253, 244, 0.8);
+            border-color: var(--sage-green);
+            backdrop-filter: blur(15px) saturate(180%);
+            -webkit-backdrop-filter: blur(15px) saturate(180%);
+        }
+        
+        .meal-slot.past-date {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: rgba(200, 200, 200, 0.5);
+        }
+        
+        .meal-slot.past-date:hover {
+            background: rgba(200, 200, 200, 0.5);
+            box-shadow: none;
+        }
+        
+        .recipe-card {
+            font-size: 0.875rem;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(15px) saturate(180%);
+            -webkit-backdrop-filter: blur(15px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            cursor: pointer;
+        }
+        
+        .recipe-card:hover {
+            background: rgba(255, 255, 255, 0.85);
+            box-shadow: 0 10px 25px 0 rgba(31, 38, 135, 0.25);
+        }
+
+        /* Sidebar Navigation Styles */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            width: 70px;
+            background-color: var(--sage-green);
+            transition: width 0.3s ease;
+            z-index: 1000;
+            overflow: hidden;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar:hover {
+            width: 250px;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            opacity: 0.5;
+            white-space: nowrap;
+        }
+
+        .sidebar-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-item.active {
+            opacity: 1;
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .sidebar-item svg {
+            min-width: 24px;
+            width: 24px;
+            height: 24px;
+            margin-right: 0;
+            transition: margin-right 0.3s ease;
+        }
+
+        .sidebar:hover .sidebar-item svg {
+            margin-right: 1rem;
+        }
+
+        .sidebar-label {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .sidebar:hover .sidebar-label {
+            opacity: 1;
+        }
+
+        .sidebar-logo {
+            padding: 1.5rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .sidebar-logo img {
+            width: 40px;
+            height: 40px;
+            min-width: 40px;
+        }
+
+        .sidebar-logo-text {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            white-space: nowrap;
+        }
+
+        .sidebar:hover .sidebar-logo-text {
+            opacity: 1;
+        }
+
+        .sidebar-footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .main-content {
+            margin-left: 70px;
+            transition: margin-left 0.3s ease;
+        }
+
+        body {
+            overflow-x: hidden;
+        }
+
+        .day-header {
+            font-size: 0.75rem;
+        }
+        
+        .day-header .date-num {
+            display: block;
+            font-size: 0.65rem;
+            opacity: 0.8;
+        }
+
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--sage-green);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body style="background-color: var(--eggshell); color: var(--deep-charcoal);">
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="sidebar-logo">
+            <img src="/static/images/logo.png" alt="Forkcast Logo">
+            <span class="sidebar-logo-text"><span style="color: #E07A5F;">FORK</span><span style="color: #F4F1DE;">CAST</span></span>
+        </div>
+        
+        <a href="{{ url_for('main.logged_in_home') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+            </svg>
+            <span class="sidebar-label">Home</span>
+        </a>
+        
+        <a href="{{ url_for('profile.dashboard') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 12a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1v-7z"></path>
+            </svg>
+            <span class="sidebar-label">Dashboard</span>
+        </a>
+        
+        <a href="{{ url_for('recipes.recipes') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+            </svg>
+            <span class="sidebar-label">Recipes</span>
+        </a>
+        
+        <a href="{{ url_for('calendar.calendar') }}" class="sidebar-item active">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <span class="sidebar-label">Meal Planner</span>
+        </a>
+        
+        <a href="{{ url_for('calorie_tracker.calorie_tracker') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            <span class="sidebar-label">Calorie Tracker</span>
+        </a>
+        
+        <a href="{{ url_for('shopping_list.shopping_list') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            </svg>
+            <span class="sidebar-label">Shopping List</span>
+        </a>
+        
+        <a href="{{ url_for('notifications.notifications') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+            </svg>
+            <span class="sidebar-label">Notifications</span>
+        </a>
+        
+        <a href="{{ url_for('profile.profile') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+            </svg>
+            <span class="sidebar-label">Profile</span>
+        </a>
+        
+        <div class="sidebar-footer">
+            <a href="{{ url_for('auth.logout') }}" class="sidebar-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                </svg>
+                <span class="sidebar-label">Logout</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="max-w-7xl mx-auto px-4 py-8">
+            <!-- Header Section -->
+            <div class="mb-6">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div>
+                        <h1 class="text-3xl font-bold mb-2" style="color: var(--deep-charcoal);">Meal Planner</h1>
+                        <p class="text-gray-600">Plan your weekly meals and stay organized</p>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="flex gap-3">
+                        <button onclick="showSavePlanModal()" 
+                                class="px-4 py-2 rounded-lg text-white font-medium hover:opacity-90 transition"
+                                style="background-color: var(--sage-green);">
+                            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
+                            </svg>
+                            Save Plan
+                        </button>
+                        <button onclick="showLoadPlanModal()" 
+                                class="px-4 py-2 rounded-lg font-medium border-2 hover:bg-gray-50 transition"
+                                style="color: var(--deep-charcoal); border-color: var(--deep-charcoal);">
+                            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                            </svg>
+                            Load Plan
+                        </button>
+                        <button onclick="clearAllMeals()" 
+                                class="px-4 py-2 rounded-lg font-medium border-2 hover:bg-red-50 transition"
+                                style="color: #DC2626; border-color: #DC2626;">
+                            Clear All
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current Plan Info -->
+            <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Current Meal Plan:</p>
+                        <p class="text-lg font-semibold" id="currentPlanName" style="color: var(--sage-green);">New Plan</p>
+                        <input type="hidden" id="currentPlanId" value="">
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm text-gray-600">Week of:</p>
+                        <div class="flex items-center gap-2">
+                            <button onclick="previousWeek()" class="p-1 hover:bg-gray-100 rounded" id="prevWeekBtn">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                                </svg>
+                            </button>
+                            <p class="text-lg font-semibold" id="weekDisplay" style="color: var(--deep-charcoal);"></p>
+                            <button onclick="nextWeek()" class="p-1 hover:bg-gray-100 rounded">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weekly Calendar Grid -->
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full border-collapse">
+                        <thead>
+                            <tr style="background-color: var(--sage-green);">
+                                <th class="py-4 px-4 text-white font-semibold text-left w-32">Meal Time</th>
+                                <th class="py-4 px-2 text-white font-semibold text-center day-header" id="header-0">Monday<span class="date-num" id="date-0"></span></th>
+                                <th class="py-4 px-2 text-white font-semibold text-center day-header" id="header-1">Tuesday<span class="date-num" id="date-1"></span></th>
+                                <th class="py-4 px-2 text-white font-semibold text-center day-header" id="header-2">Wednesday<span class="date-num" id="date-2"></span></th>
+                                <th class="py-4 px-2 text-white font-semibold text-center day-header" id="header-3">Thursday<span class="date-num" id="date-3"></span></th>
+                                <th class="py-4 px-2 text-white font-semibold text-center day-header" id="header-4">Friday<span class="date-num" id="date-4"></span></th>
+                                <th class="py-4 px-2 text-white font-semibold text-center day-header" id="header-5">Saturday<span class="date-num" id="date-5"></span></th>
+                                <th class="py-4 px-2 text-white font-semibold text-center day-header" id="header-6">Sunday<span class="date-num" id="date-6"></span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Breakfast Row -->
+                            <tr class="border-b border-gray-200">
+                                <td class="py-4 px-4 font-semibold bg-gray-50" style="color: var(--deep-charcoal);">
+                                    <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                                    </svg>
+                                    Breakfast
+                                </td>
+                                <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" data-day="0" data-meal="breakfast" id="slot-0-breakfast"></div></td>
+                                <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" data-day="1" data-meal="breakfast" id="slot-1-breakfast"></div></td>
+                                <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" data-day="2" data-meal="breakfast" id="slot-2-breakfast"></div></td>
+                                <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" data-day="3" data-meal="breakfast" id="slot-3-breakfast"></div></td>
+                                <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" data-day="4" data-meal="breakfast" id="slot-4-breakfast"></div></td>
+                                <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" data-day="5" data-meal="breakfast" id="slot-5-breakfast"></div></td>
+                                <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" data-day="6" data-meal="breakfast" id="slot-6-breakfast"></div></td>
+                            </tr>
+                            
+                            <!-- Lunch Row -->
+                            <tr class="border-b border-gray-200">
+                                <td class="py-4 px-4 font-semibold bg-gray-50" style="color: var(--deep-charcoal);">
+                                    <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    Lunch
+                                </td>
+                                <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" data-day="0" data-meal="lunch" id="slot-0-lunch"></div></td>
+                                <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" data-day="1" data-meal="lunch" id="slot-1-lunch"></div></td>
+                                <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" data-day="2" data-meal="lunch" id="slot-2-lunch"></div></td>
+                                <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" data-day="3" data-meal="lunch" id="slot-3-lunch"></div></td>
+                                <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" data-day="4" data-meal="lunch" id="slot-4-lunch"></div></td>
+                                <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" data-day="5" data-meal="lunch" id="slot-5-lunch"></div></td>
+                                <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" data-day="6" data-meal="lunch" id="slot-6-lunch"></div></td>
+                            </tr>
+                            
+                            <!-- Dinner Row -->
+                            <tr class="border-b border-gray-200">
+                                <td class="py-4 px-4 font-semibold bg-gray-50" style="color: var(--deep-charcoal);">
+                                    <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                                    </svg>
+                                    Dinner
+                                </td>
+                                <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" data-day="0" data-meal="dinner" id="slot-0-dinner"></div></td>
+                                <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" data-day="1" data-meal="dinner" id="slot-1-dinner"></div></td>
+                                <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" data-day="2" data-meal="dinner" id="slot-2-dinner"></div></td>
+                                <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" data-day="3" data-meal="dinner" id="slot-3-dinner"></div></td>
+                                <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" data-day="4" data-meal="dinner" id="slot-4-dinner"></div></td>
+                                <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" data-day="5" data-meal="dinner" id="slot-5-dinner"></div></td>
+                                <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" data-day="6" data-meal="dinner" id="slot-6-dinner"></div></td>
+                            </tr>
+                            
+                            <!-- Snack Row -->
+                            <tr>
+                                <td class="py-4 px-4 font-semibold bg-gray-50" style="color: var(--deep-charcoal);">
+                                    <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                    </svg>
+                                    Snack
+                                </td>
+                                <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" data-day="0" data-meal="snack" id="slot-0-snack"></div></td>
+                                <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" data-day="1" data-meal="snack" id="slot-1-snack"></div></td>
+                                <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" data-day="2" data-meal="snack" id="slot-2-snack"></div></td>
+                                <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" data-day="3" data-meal="snack" id="slot-3-snack"></div></td>
+                                <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" data-day="4" data-meal="snack" id="slot-4-snack"></div></td>
+                                <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" data-day="5" data-meal="snack" id="slot-5-snack"></div></td>
+                                <td class="p-2"><div class="meal-slot border-2 border-dashed border-gray-300 rounded-lg p-2" data-day="6" data-meal="snack" id="slot-6-snack"></div></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Shopping List Section -->
+            <div class="mt-6 bg-white rounded-lg shadow-lg p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-2xl font-bold" style="color: var(--deep-charcoal);">
+                        <svg class="w-6 h-6 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                        Shopping List
+                    </h2>
+                    <a href="{{ url_for('shopping_list.shopping_list') }}" 
+                       class="px-4 py-2 rounded-lg text-white font-medium hover:opacity-90 transition"
+                       style="background-color: var(--terracotta);">
+                        View Shopping List
+                    </a>
+                </div>
+                <div class="text-gray-600">
+                    <p class="italic">Click "View Shopping List" to see a detailed shopping list with automatic ingredient aggregation and smart categorization from your weekly meal plan.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Recipe Modal -->
+    <div id="addRecipeModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold" style="color: var(--deep-charcoal);">Add Recipe</h2>
+                <button onclick="closeAddRecipeModal()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="mb-4">
+                <input type="text" 
+                       id="recipeSearch"
+                       placeholder="Search recipes..."
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+            </div>
+
+            <div id="recipeListLoading" class="hidden text-center py-8">
+                <div class="loading-spinner mx-auto mb-2"></div>
+                <p class="text-gray-500">Loading recipes...</p>
+            </div>
+
+            <div id="recipeList" class="space-y-3">
+                <!-- Recipes will be loaded dynamically -->
+            </div>
+
+            <div id="noRecipesMessage" class="hidden text-center py-8">
+                <p class="text-gray-500">No recipes found. <a href="{{ url_for('recipes.recipes') }}" class="text-green-600 hover:underline">Add some recipes</a> to get started!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Save Plan Modal -->
+    <div id="savePlanModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+            <h2 class="text-2xl font-bold mb-4" style="color: var(--deep-charcoal);">Save Meal Plan</h2>
+            
+            <form onsubmit="saveMealPlan(event)">
+                <div class="mb-4">
+                    <label for="planName" class="block text-sm font-medium mb-2" style="color: var(--deep-charcoal);">
+                        Plan Name <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" 
+                           id="planName" 
+                           required
+                           placeholder="e.g., Healthy Week, Family Plan"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                </div>
+                
+                <div class="mb-6">
+                    <label for="planDescription" class="block text-sm font-medium mb-2" style="color: var(--deep-charcoal);">
+                        Description (optional)
+                    </label>
+                    <textarea id="planDescription" 
+                              rows="3"
+                              placeholder="Add notes about this meal plan..."
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"></textarea>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button type="submit" 
+                            class="flex-1 px-4 py-2 rounded-lg text-white font-medium hover:opacity-90 transition"
+                            style="background-color: var(--sage-green);">
+                        Save Plan
+                    </button>
+                    <button type="button" 
+                            onclick="closeSavePlanModal()"
+                            class="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Load Plan Modal -->
+    <div id="loadPlanModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold" style="color: var(--deep-charcoal);">Load Meal Plan</h2>
+                <button onclick="closeLoadPlanModal()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div id="savedPlansLoading" class="hidden text-center py-8">
+                <div class="loading-spinner mx-auto mb-2"></div>
+                <p class="text-gray-500">Loading saved plans...</p>
+            </div>
+
+            <div id="savedPlansList" class="space-y-3">
+                <!-- Saved plans will be loaded dynamically -->
+            </div>
+
+            <div id="noPlansMessage" class="hidden text-center py-8">
+                <p class="text-gray-500">No saved meal plans yet. Create your first meal plan!</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State management
+        let currentDayIndex = 0;
+        let currentMealType = '';
+        // Changed: mealPlan now stores data per week: { "2025-12-09": { "0-breakfast": {...}, ... }, ... }
+        let mealPlanByWeek = {};
+        let currentWeekStart = null;
+        let availableRecipes = [];
+
+        // Helper: Get today's date dynamically (not hardcoded)
+        function getToday() {
+            const now = new Date();
+            now.setHours(0, 0, 0, 0);
+            return now;
+        }
+
+        // Helper: Get current week's meal plan
+        function getCurrentWeekMealPlan() {
+            const weekKey = getISODate(currentWeekStart);
+            if (!mealPlanByWeek[weekKey]) {
+                mealPlanByWeek[weekKey] = {};
+            }
+            return mealPlanByWeek[weekKey];
+        }
+
+        // Auto-save current week's calendar data to backend
+        async function autoSaveWeekData() {
+            const weekKey = getISODate(currentWeekStart);
+            const currentMealPlan = getCurrentWeekMealPlan();
+            
+            try {
+                await fetch(`/calendar/api/week/${weekKey}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ meals: currentMealPlan })
+                });
+            } catch (error) {
+                console.error('Error auto-saving calendar data:', error);
+            }
+        }
+
+        // Load calendar data for the current week from backend
+        async function loadWeekData() {
+            const weekKey = getISODate(currentWeekStart);
+            
+            try {
+                const response = await fetch(`/calendar/api/week/${weekKey}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        mealPlanByWeek[weekKey] = data.meals || {};
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading calendar data:', error);
+            }
+            
+            renderMealPlan();
+        }
+
+        // Helper: Get Monday of the current week
+        function getMondayOfWeek(date) {
+            const d = new Date(date);
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+            return new Date(d.setDate(diff));
+        }
+
+        // Helper: Format date
+        function formatDate(date) {
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        // Helper: Get ISO date string (YYYY-MM-DD)
+        function getISODate(date) {
+            return date.toISOString().split('T')[0];
+        }
+
+        // Initialize the calendar with current week
+        async function initCalendar() {
+            currentWeekStart = getMondayOfWeek(getToday());
+            updateWeekDisplay();
+            updateSlotStates();
+            setupSlotListeners();
+            loadRecipes();
+            // Load saved calendar data for current week
+            await loadWeekData();
+        }
+
+        function updateWeekDisplay() {
+            const weekEnd = new Date(currentWeekStart);
+            weekEnd.setDate(weekEnd.getDate() + 6);
+            
+            const startStr = formatDate(currentWeekStart);
+            const endStr = formatDate(weekEnd);
+            const year = currentWeekStart.getFullYear();
+            
+            document.getElementById('weekDisplay').textContent = `${startStr} - ${endStr}, ${year}`;
+
+            // Update date numbers in headers
+            for (let i = 0; i < 7; i++) {
+                const dayDate = new Date(currentWeekStart);
+                dayDate.setDate(dayDate.getDate() + i);
+                document.getElementById(`date-${i}`).textContent = dayDate.getDate();
+            }
+
+            // Check if previous week button should be disabled
+            const minWeekStart = getMondayOfWeek(getToday());
+            const prevBtn = document.getElementById('prevWeekBtn');
+            if (currentWeekStart <= minWeekStart) {
+                prevBtn.style.opacity = '0.3';
+                prevBtn.style.cursor = 'not-allowed';
+            } else {
+                prevBtn.style.opacity = '1';
+                prevBtn.style.cursor = 'pointer';
+            }
+
+            updateSlotStates();
+        }
+
+        function updateSlotStates() {
+            const mealTypes = ['breakfast', 'lunch', 'dinner', 'snack'];
+            
+            for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+                const slotDate = new Date(currentWeekStart);
+                slotDate.setDate(slotDate.getDate() + dayIndex);
+                slotDate.setHours(0, 0, 0, 0);
+                
+                const isPast = slotDate < getToday();
+                
+                mealTypes.forEach(mealType => {
+                    const slot = document.getElementById(`slot-${dayIndex}-${mealType}`);
+                    if (isPast) {
+                        slot.classList.add('past-date');
+                    } else {
+                        slot.classList.remove('past-date');
+                    }
+                });
+            }
+        }
+
+        function setupSlotListeners() {
+            const mealTypes = ['breakfast', 'lunch', 'dinner', 'snack'];
+            
+            for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+                mealTypes.forEach(mealType => {
+                    const slot = document.getElementById(`slot-${dayIndex}-${mealType}`);
+                    slot.addEventListener('click', function(e) {
+                        if (e.target.closest('button')) return; // Don't trigger if clicking remove button
+                        
+                        const slotDate = new Date(currentWeekStart);
+                        slotDate.setDate(slotDate.getDate() + dayIndex);
+                        slotDate.setHours(0, 0, 0, 0);
+                        
+                        if (slotDate < getToday()) {
+                            alert('Cannot plan meals for past dates.');
+                            return;
+                        }
+                        
+                        currentDayIndex = dayIndex;
+                        currentMealType = mealType;
+                        openAddRecipeModal();
+                    });
+                });
+            }
+        }
+
+        async function previousWeek() {
+            const minWeekStart = getMondayOfWeek(getToday());
+            if (currentWeekStart <= minWeekStart) {
+                alert('Cannot navigate to past weeks.');
+                return;
+            }
+            currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+            updateWeekDisplay();
+            // Load saved data for this week
+            await loadWeekData();
+        }
+
+        async function nextWeek() {
+            currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+            updateWeekDisplay();
+            // Load saved data for this week
+            await loadWeekData();
+        }
+
+        // Load recipes from the backend
+        async function loadRecipes(searchTerm = '') {
+            try {
+                const url = searchTerm 
+                    ? `/api/recipes/list?search=${encodeURIComponent(searchTerm)}`
+                    : '/api/recipes/list';
+                    
+                const response = await fetch(url);
+                if (response.ok) {
+                    availableRecipes = await response.json();
+                    renderRecipeList();
+                }
+            } catch (error) {
+                console.error('Error loading recipes:', error);
+            }
+        }
+
+        function renderRecipeList() {
+            const recipeListEl = document.getElementById('recipeList');
+            const noRecipesEl = document.getElementById('noRecipesMessage');
+            
+            if (availableRecipes.length === 0) {
+                recipeListEl.innerHTML = '';
+                noRecipesEl.classList.remove('hidden');
+            } else {
+                noRecipesEl.classList.add('hidden');
+                recipeListEl.innerHTML = availableRecipes.map(recipe => `
+                    <div class="recipe-item border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition" 
+                         onclick="selectRecipe(${recipe.id}, '${escapeHtml(recipe.title)}', ${recipe.prep_time || 0}, ${recipe.cook_time || 0}, '${escapeHtml(recipe.category || '')}')">
+                        <div class="flex items-center gap-3">
+                            ${recipe.image_url ? `<img src="${recipe.image_url}" class="w-12 h-12 rounded object-cover">` : ''}
+                            <div class="flex-1">
+                                <h3 class="font-semibold" style="color: var(--deep-charcoal);">${escapeHtml(recipe.title)}</h3>
+                                <p class="text-sm text-gray-600">
+                                    ${recipe.category ? recipe.category + ' • ' : ''}
+                                    ${(recipe.prep_time || 0) + (recipe.cook_time || 0)} mins
+                                    ${recipe.calories_per_serving ? ' • ' + recipe.calories_per_serving + ' cal' : ''}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML.replace(/'/g, "\\'");
+        }
+
+        function openAddRecipeModal() {
+            document.getElementById('addRecipeModal').classList.remove('hidden');
+            document.getElementById('recipeSearch').value = '';
+            renderRecipeList();
+        }
+
+        function closeAddRecipeModal() {
+            document.getElementById('addRecipeModal').classList.add('hidden');
+        }
+
+        function selectRecipe(recipeId, recipeName, prepTime, cookTime, category) {
+            const slotKey = `${currentDayIndex}-${currentMealType}`;
+            const slot = document.getElementById(`slot-${slotKey}`);
+            
+            // Get current week's meal plan
+            const currentMealPlan = getCurrentWeekMealPlan();
+            
+            // Create new recipe object
+            const newRecipe = {
+                recipeId: recipeId,
+                recipeName: recipeName,
+                prepTime: prepTime,
+                cookTime: cookTime,
+                category: category
+            };
+            
+            // Support multiple items per slot - ensure slot has an array
+            if (!currentMealPlan[slotKey]) {
+                currentMealPlan[slotKey] = [];
+            }
+            
+            // Handle legacy single-item format (convert to array)
+            if (!Array.isArray(currentMealPlan[slotKey])) {
+                currentMealPlan[slotKey] = [currentMealPlan[slotKey]];
+            }
+            
+            // Check if recipe already exists in slot
+            const exists = currentMealPlan[slotKey].some(r => r.recipeId === recipeId);
+            if (exists) {
+                alert('This recipe is already added to this slot.');
+                return;
+            }
+            
+            // Add recipe to array
+            currentMealPlan[slotKey].push(newRecipe);
+            
+            // Render the slot
+            renderSlot(currentDayIndex, currentMealType);
+            
+            // Auto-save to persist the change
+            autoSaveWeekData();
+            
+            closeAddRecipeModal();
+        }
+
+        function renderSlot(dayIndex, mealType) {
+            const slotKey = `${dayIndex}-${mealType}`;
+            const slot = document.getElementById(`slot-${slotKey}`);
+            const currentMealPlan = getCurrentWeekMealPlan();
+            let meals = currentMealPlan[slotKey];
+            
+            // Handle legacy single-item format (convert to array)
+            if (meals && !Array.isArray(meals)) {
+                meals = [meals];
+                currentMealPlan[slotKey] = meals;
+            }
+            
+            if (meals && meals.length > 0) {
+                slot.innerHTML = meals.map((meal, index) => `
+                    <div class="recipe-card flex items-center justify-between mb-1">
+                        <div class="flex-1">
+                            <p class="font-semibold text-gray-800 text-xs">${escapeHtml(meal.recipeName).replace(/\\'/g, "'")}</p>
+                        </div>
+                        <button onclick="removeRecipe(event, ${dayIndex}, '${mealType}', ${index})" 
+                                class="ml-2 text-red-500 hover:text-red-700">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                `).join('');
+                slot.classList.add('has-recipe');
+            } else {
+                slot.innerHTML = '';
+                slot.classList.remove('has-recipe');
+            }
+        }
+
+        function renderMealPlan() {
+            const mealTypes = ['breakfast', 'lunch', 'dinner', 'snack'];
+            for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+                mealTypes.forEach(mealType => {
+                    renderSlot(dayIndex, mealType);
+                });
+            }
+        }
+
+        function removeRecipe(event, dayIndex, mealType, recipeIndex) {
+            event.stopPropagation();
+            const slotKey = `${dayIndex}-${mealType}`;
+            const currentMealPlan = getCurrentWeekMealPlan();
+            
+            // Handle legacy single-item format
+            if (!Array.isArray(currentMealPlan[slotKey])) {
+                delete currentMealPlan[slotKey];
+            } else {
+                // Remove specific recipe by index
+                currentMealPlan[slotKey].splice(recipeIndex, 1);
+                // Clean up empty arrays
+                if (currentMealPlan[slotKey].length === 0) {
+                    delete currentMealPlan[slotKey];
+                }
+            }
+            
+            renderSlot(dayIndex, mealType);
+            
+            // Auto-save to persist the change
+            autoSaveWeekData();
+        }
+
+        function clearAllMeals() {
+            if (!confirm('Are you sure you want to clear all meals from this week\'s calendar?')) return;
+            
+            // Only clear the current week's meal plan
+            const weekKey = getISODate(currentWeekStart);
+            mealPlanByWeek[weekKey] = {};
+            renderMealPlan();
+            document.getElementById('currentPlanName').textContent = 'New Plan';
+            document.getElementById('currentPlanId').value = '';
+            
+            // Auto-save to persist the change
+            autoSaveWeekData();
+        }
+
+        function showSavePlanModal() {
+            // Pre-fill with current plan name if editing
+            const currentName = document.getElementById('currentPlanName').textContent;
+            if (currentName !== 'New Plan') {
+                document.getElementById('planName').value = currentName;
+            }
+            document.getElementById('savePlanModal').classList.remove('hidden');
+        }
+
+        function closeSavePlanModal() {
+            document.getElementById('savePlanModal').classList.add('hidden');
+            document.getElementById('planName').value = '';
+            document.getElementById('planDescription').value = '';
+        }
+
+        async function saveMealPlan(event) {
+            event.preventDefault();
+            
+            const planName = document.getElementById('planName').value.trim();
+            const planDescription = document.getElementById('planDescription').value.trim();
+            const currentPlanId = document.getElementById('currentPlanId').value;
+            
+            if (!planName) {
+                alert('Please enter a plan name.');
+                return;
+            }
+            
+            // Check if there are any meals in the current week
+            const currentMealPlan = getCurrentWeekMealPlan();
+            if (Object.keys(currentMealPlan).length === 0) {
+                alert('Please add at least one meal to your plan before saving.');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/calendar/api/meal-plans', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        plan_id: currentPlanId || null,
+                        name: planName,
+                        description: planDescription,
+                        week_start_date: getISODate(currentWeekStart),
+                        meals: currentMealPlan  // Only save current week's meals
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('currentPlanName').textContent = planName;
+                    document.getElementById('currentPlanId').value = result.plan_id;
+                    alert(result.message);
+                    closeSavePlanModal();
+                } else {
+                    alert('Error saving meal plan: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error saving meal plan:', error);
+                alert('Error saving meal plan. Please try again.');
+            }
+        }
+
+        function showLoadPlanModal() {
+            document.getElementById('loadPlanModal').classList.remove('hidden');
+            loadSavedPlans();
+        }
+
+        function closeLoadPlanModal() {
+            document.getElementById('loadPlanModal').classList.add('hidden');
+        }
+
+        async function loadSavedPlans() {
+            const loadingEl = document.getElementById('savedPlansLoading');
+            const listEl = document.getElementById('savedPlansList');
+            const noPlansEl = document.getElementById('noPlansMessage');
+            
+            loadingEl.classList.remove('hidden');
+            listEl.innerHTML = '';
+            noPlansEl.classList.add('hidden');
+            
+            try {
+                const response = await fetch('/calendar/api/meal-plans');
+                const plans = await response.json();
+                
+                loadingEl.classList.add('hidden');
+                
+                if (plans.length === 0) {
+                    noPlansEl.classList.remove('hidden');
+                } else {
+                    listEl.innerHTML = plans.map(plan => {
+                        const savedDate = new Date(plan.updated_at).toLocaleDateString('en-US', {
+                            month: 'short', day: 'numeric', year: 'numeric'
+                        });
+                        return `
+                            <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition flex justify-between items-start" 
+                                 onclick="loadMealPlan(${plan.id})">
+                                <div>
+                                    <h3 class="font-semibold" style="color: var(--deep-charcoal);">${escapeHtml(plan.name).replace(/\\'/g, "'")}</h3>
+                                    <p class="text-sm text-gray-600">${escapeHtml(plan.description || 'No description').replace(/\\'/g, "'")}</p>
+                                    <p class="text-xs text-gray-500 mt-1">Saved: ${savedDate}</p>
+                                </div>
+                                <button onclick="event.stopPropagation(); deleteMealPlan(${plan.id}, '${escapeHtml(plan.name)}')" 
+                                        class="text-red-500 hover:text-red-700 p-1">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            } catch (error) {
+                console.error('Error loading saved plans:', error);
+                loadingEl.classList.add('hidden');
+                listEl.innerHTML = '<p class="text-center text-red-500">Error loading saved plans</p>';
+            }
+        }
+
+        async function loadMealPlan(planId) {
+            try {
+                const response = await fetch(`/calendar/api/meal-plans/${planId}`);
+                const plan = await response.json();
+                
+                if (plan.error) {
+                    alert('Error loading meal plan: ' + plan.error);
+                    return;
+                }
+                
+                // Set current plan info
+                document.getElementById('currentPlanName').textContent = plan.name;
+                document.getElementById('currentPlanId').value = plan.id;
+                
+                // Load meal plan data into CURRENT WEEK only (not replacing all weeks)
+                const weekKey = getISODate(currentWeekStart);
+                mealPlanByWeek[weekKey] = plan.meals || {};
+                
+                renderMealPlan();
+                closeLoadPlanModal();
+                
+                // Auto-save to persist the loaded plan to this week
+                autoSaveWeekData();
+                
+            } catch (error) {
+                console.error('Error loading meal plan:', error);
+                alert('Error loading meal plan. Please try again.');
+            }
+        }
+
+        async function deleteMealPlan(planId, planName) {
+            if (!confirm(`Are you sure you want to delete "${planName.replace(/\\'/g, "'")}"?`)) return;
+            
+            try {
+                const response = await fetch(`/calendar/api/meal-plans/${planId}`, {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // If we deleted the current plan, reset to new plan
+                    if (document.getElementById('currentPlanId').value == planId) {
+                        document.getElementById('currentPlanName').textContent = 'New Plan';
+                        document.getElementById('currentPlanId').value = '';
+                    }
+                    loadSavedPlans();
+                }
+            } catch (error) {
+                console.error('Error deleting meal plan:', error);
+                alert('Error deleting meal plan. Please try again.');
+            }
+        }
+
+        // Recipe search with debounce
+        let searchTimeout;
+        document.getElementById('recipeSearch')?.addEventListener('input', function(e) {
+            clearTimeout(searchTimeout);
+            const searchTerm = e.target.value.trim();
+            
+            searchTimeout = setTimeout(() => {
+                loadRecipes(searchTerm);
+            }, 300);
+        });
+
+        // Close modals when clicking outside
+        document.getElementById('addRecipeModal').addEventListener('click', function(e) {
+            if (e.target === this) closeAddRecipeModal();
+        });
+
+        document.getElementById('savePlanModal').addEventListener('click', function(e) {
+            if (e.target === this) closeSavePlanModal();
+        });
+
+        document.getElementById('loadPlanModal').addEventListener('click', function(e) {
+            if (e.target === this) closeLoadPlanModal();
+        });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', initCalendar);
+    </script>
+</body>
+</html>
