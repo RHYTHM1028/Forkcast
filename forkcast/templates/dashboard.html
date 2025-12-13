@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Dashboard - Forkcast</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --sage-green: #4A7C59;
+            --terracotta: #E07A5F;
+            --eggshell: #F4F1DE;
+            --white: #FFFFFF;
+            --deep-charcoal: #3D405B;
+        }
+
+        .stat-card {
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .widget-card {
+            transition: all 0.2s ease;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        }
+
+        .widget-card.dragging {
+            opacity: 0.5;
+        }
+
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.5s ease;
+        }
+
+        .chart-bar {
+            transition: height 0.3s ease;
+        }
+
+        .jiggle {
+            animation: jiggle 0.3s infinite;
+        }
+
+        @keyframes jiggle {
+            0%, 100% {
+                transform: rotate(-1deg);
+            }
+            50% {
+                transform: rotate(1deg);
+            }
+        }
+
+        .draggable {
+            cursor: move;
+        }
+
+        .draggable:active {
+            opacity: 0.7;
+        }
+
+        /* Stat card sizes - use flex basis for responsive sizing */
+        .stat-card.widget-small {
+            flex: 0 0 calc(20% - 1.5rem);
+            min-width: 180px;
+        }
+
+        .stat-card.widget-medium {
+            flex: 0 0 calc(25% - 1.5rem);
+            min-width: 220px;
+        }
+
+        .stat-card.widget-large {
+            flex: 0 0 calc(33.333% - 1.5rem);
+            min-width: 280px;
+        }
+
+        /* Widget card sizes - use grid column spans */
+        .widget-card.widget-small {
+            grid-column: span 1;
+        }
+
+        .widget-card.widget-medium {
+            grid-column: span 1;
+        }
+
+        .widget-card.widget-large {
+            grid-column: span 2;
+        }
+
+        /* Special handling for large nutrition and goals widgets */
+        #nutritionWidget.widget-small,
+        #goalsWidget.widget-small {
+            grid-column: span 1;
+        }
+
+        #nutritionWidget.widget-medium,
+        #goalsWidget.widget-medium {
+            grid-column: span 2;
+        }
+
+        #nutritionWidget.widget-large,
+        #goalsWidget.widget-large {
+            grid-column: span 3;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: var(--sage-green);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
+
+        /* Sidebar Navigation Styles */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            width: 70px;
+            background: rgba(74, 124, 89, 0.7);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-right: 1px solid rgba(255, 255, 255, 0.18);
+            transition: width 0.3s ease;
+            z-index: 1000;
+            overflow: hidden;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+
+        .sidebar:hover {
+            width: 250px;
+            background: rgba(74, 124, 89, 0.8);
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0.5;
+            white-space: nowrap;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .sidebar-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            transform: translateX(3px);
+        }
+
+        .sidebar-item.active {
+            opacity: 1;
+            background: rgba(255, 255, 255, 0.2);
+            border-left: 3px solid rgba(244, 241, 222, 0.8);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+        }
+
+        .sidebar-item svg {
+            min-width: 24px;
+            width: 24px;
+            height: 24px;
+            margin-right: 0;
+            transition: margin-right 0.3s ease;
+        }
+
+        .sidebar:hover .sidebar-item svg {
+            margin-right: 1rem;
+        }
+
+        .sidebar-label {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .sidebar:hover .sidebar-label {
+            opacity: 1;
+        }
+
+        .sidebar-logo {
+            padding: 1.5rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .sidebar-logo img {
+            width: 40px;
+            height: 40px;
+            min-width: 40px;
+        }
+
+        .sidebar-logo-text {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            white-space: nowrap;
+        }
+
+        .sidebar:hover .sidebar-logo-text {
+            opacity: 1;
+        }
+
+        .sidebar-footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            border-top: 1px solid rgba(255, 255, 255, 0.18);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .main-content {
+            margin-left: 70px;
+            transition: margin-left 0.3s ease;
+        }
+
+        body {
+            overflow-x: hidden;
+        }
+    </style>
+</head>
+<body style="background-color: var(--eggshell); color: var(--deep-charcoal);">
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="sidebar-logo">
+            <img src="/static/images/logo.png" alt="Forkcast Logo">
+            <span class="sidebar-logo-text"><span style="color: #E07A5F;">FORK</span><span style="color: #F4F1DE;">CAST</span></span>
+        </div>
+        
+        <a href="{{ url_for('main.logged_in_home') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+            </svg>
+            <span class="sidebar-label">Home</span>
+        </a>
+        
+        <a href="{{ url_for('profile.dashboard') }}" class="sidebar-item active">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 12a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1v-7z"></path>
+            </svg>
+            <span class="sidebar-label">Dashboard</span>
+        </a>
+        
+        <a href="{{ url_for('recipes.recipes') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+            </svg>
+            <span class="sidebar-label">Recipes</span>
+        </a>
+        
+        <a href="{{ url_for('calendar.calendar') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <span class="sidebar-label">Meal Planner</span>
+        </a>
+        
+        <a href="{{ url_for('calorie_tracker.calorie_tracker') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            <span class="sidebar-label">Calorie Tracker</span>
+        </a>
+        
+        <a href="{{ url_for('shopping_list.shopping_list') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            </svg>
+            <span class="sidebar-label">Shopping List</span>
+        </a>
+        
+        <a href="{{ url_for('notifications.notifications') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+            </svg>
+            <span class="sidebar-label">Notifications</span>
+        </a>
+        
+        <a href="{{ url_for('profile.profile') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+            </svg>
+            <span class="sidebar-label">Profile</span>
+        </a>
+        
+        <div class="sidebar-footer">
+            <a href="{{ url_for('auth.logout') }}" class="sidebar-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                </svg>
+                <span class="sidebar-label">Logout</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Header Section -->
+        <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <h1 class="text-3xl font-bold mb-2" style="color: var(--deep-charcoal);">My Dashboard</h1>
+                <p class="text-gray-600">Your personalized overview of meals, nutrition, and activity</p>
+            </div>
+            <button onclick="showCustomizeModal()" class="px-6 py-3 rounded-lg text-white font-medium hover:opacity-90 transition flex items-center gap-2" style="background-color: var(--sage-green);">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                Customize Dashboard
+            </button>
+            <button id="arrangeBtn" onclick="toggleArrangeMode()" class="px-6 py-3 rounded-lg font-medium border-2 hover:opacity-90 transition flex items-center gap-2" style="color: var(--sage-green); border-color: var(--sage-green);">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+                <span id="arrangeBtnText">Arrange Widgets</span>
+            </button>
+        </div>
+
+        <!-- Quick Stats Row -->
+        <div id="quickStatsSection" class="flex flex-wrap gap-6 mb-6">
+            <!-- Today's Calories -->
+            <div id="stat-todayCalories" class="stat-card bg-white rounded-lg shadow-md p-6" data-widget="todayCalories">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="p-3 rounded-full" style="background-color: rgba(74, 124, 89, 0.1);">
+                        <svg class="w-6 h-6" style="color: var(--sage-green);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path>
+                        </svg>
+                    </div>
+                    <span class="text-sm font-medium text-gray-500">Today</span>
+                </div>
+                <h3 class="text-3xl font-bold mb-1" style="color: var(--deep-charcoal);" id="todayCaloriesValue">1,450</h3>
+                <p class="text-sm text-gray-600">of 2,000 cal goal</p>
+                <div class="mt-3 w-full bg-gray-200 rounded-full h-2">
+                    <div class="h-2 rounded-full" style="background-color: var(--sage-green); width: 72.5%;"></div>
+                </div>
+            </div>
+
+            <!-- Weekly Meals -->
+            <div id="stat-weeklyMeals" class="stat-card bg-white rounded-lg shadow-md p-6" data-widget="weeklyMeals">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="p-3 rounded-full" style="background-color: rgba(224, 122, 95, 0.1);">
+                        <svg class="w-6 h-6" style="color: var(--terracotta);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                        </svg>
+                    </div>
+                    <span class="text-sm font-medium text-gray-500">This Week</span>
+                </div>
+                <h3 class="text-3xl font-bold mb-1" style="color: var(--deep-charcoal);" id="weeklyMealsValue">18</h3>
+                <p class="text-sm text-gray-600">meals planned</p>
+                <p class="text-xs text-green-600 mt-2">↑ 3 more than last week</p>
+            </div>
+
+            <!-- Saved Recipes -->
+            <div id="stat-savedRecipes" class="stat-card bg-white rounded-lg shadow-md p-6" data-widget="savedRecipes">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="p-3 rounded-full" style="background-color: rgba(74, 124, 89, 0.1);">
+                        <svg class="w-6 h-6" style="color: var(--sage-green);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                        </svg>
+                    </div>
+                    <span class="text-sm font-medium text-gray-500">Library</span>
+                </div>
+                <h3 class="text-3xl font-bold mb-1" style="color: var(--deep-charcoal);" id="savedRecipesValue">42</h3>
+                <p class="text-sm text-gray-600">saved recipes</p>
+                <p class="text-xs text-blue-600 mt-2">5 new this month</p>
+            </div>
+
+            <!-- Streak -->
+            <div id="stat-planningStreak" class="stat-card bg-white rounded-lg shadow-md p-6" data-widget="planningStreak">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="p-3 rounded-full" style="background-color: rgba(224, 122, 95, 0.1);">
+                        <svg class="w-6 h-6" style="color: var(--terracotta);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+                        </svg>
+                    </div>
+                    <span class="text-sm font-medium text-gray-500">Streak</span>
+                </div>
+                <h3 class="text-3xl font-bold mb-1" style="color: var(--deep-charcoal);" id="planningStreakValue">12</h3>
+                <p class="text-sm text-gray-600">days logging meals</p>
+                <p class="text-xs text-green-600 mt-2">🔥 Keep it up!</p>
+            </div>
+        </div>
+
+        <!-- Main Dashboard Widgets Grid -->
+        <div id="mainWidgetsGrid" class="grid grid-cols-1 lg:grid-cols-3 gap-6" style="grid-auto-flow: dense;">
+            <!-- Nutrition Overview Widget -->
+            <div id="nutritionWidget" class="widget-card bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold" style="color: var(--deep-charcoal);">Nutrition Overview</h2>
+                    <select id="nutritionPeriod" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                        <option value="today">Today</option>
+                        <option value="week">This Week</option>
+                        <option value="month">This Month</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-3 gap-6 mb-6">
+                    <!-- Protein -->
+                    <div class="text-center">
+                        <svg class="w-24 h-24 mx-auto mb-2">
+                            <circle cx="48" cy="48" r="40" stroke="#e5e7eb" stroke-width="8" fill="none"></circle>
+                            <circle id="proteinCircle" cx="48" cy="48" r="40" stroke="#4A7C59" stroke-width="8" fill="none" 
+                                    stroke-dasharray="251.2" stroke-dashoffset="62.8" class="progress-ring-circle"></circle>
+                            <text x="48" y="52" text-anchor="middle" font-size="16" font-weight="bold" fill="#3D405B" id="proteinPercent">75%</text>
+                        </svg>
+                        <p class="font-semibold text-gray-700">Protein</p>
+                        <p class="text-sm text-gray-500" id="proteinAmount">90g / 120g</p>
+                    </div>
+
+                    <!-- Carbs -->
+                    <div class="text-center">
+                        <svg class="w-24 h-24 mx-auto mb-2">
+                            <circle cx="48" cy="48" r="40" stroke="#e5e7eb" stroke-width="8" fill="none"></circle>
+                            <circle id="carbsCircle" cx="48" cy="48" r="40" stroke="#E07A5F" stroke-width="8" fill="none" 
+                                    stroke-dasharray="251.2" stroke-dashoffset="100.48" class="progress-ring-circle"></circle>
+                            <text x="48" y="52" text-anchor="middle" font-size="16" font-weight="bold" fill="#3D405B" id="carbsPercent">60%</text>
+                        </svg>
+                        <p class="font-semibold text-gray-700">Carbs</p>
+                        <p class="text-sm text-gray-500" id="carbsAmount">150g / 250g</p>
+                    </div>
+
+                    <!-- Fats -->
+                    <div class="text-center">
+                        <svg class="w-24 h-24 mx-auto mb-2">
+                            <circle cx="48" cy="48" r="40" stroke="#e5e7eb" stroke-width="8" fill="none"></circle>
+                            <circle id="fatsCircle" cx="48" cy="48" r="40" stroke="#F4A261" stroke-width="8" fill="none" 
+                                    stroke-dasharray="251.2" stroke-dashoffset="37.68" class="progress-ring-circle"></circle>
+                            <text x="48" y="52" text-anchor="middle" font-size="16" font-weight="bold" fill="#3D405B" id="fatsPercent">85%</text>
+                        </svg>
+                        <p class="font-semibold text-gray-700">Fats</p>
+                        <p class="text-sm text-gray-500" id="fatsAmount">51g / 60g</p>
+                    </div>
+                </div>
+
+                <div class="border-t pt-4">
+                    <h3 class="text-sm font-semibold text-gray-700 mb-3">Weekly Calorie Trend</h3>
+                    <div class="flex items-end justify-between gap-2 h-32">
+                        <div class="flex-1 flex flex-col items-center">
+                            <div class="w-full bg-gray-200 rounded-t flex flex-col justify-end" style="height: 100%;">
+                                <div class="chart-bar w-full rounded-t" style="background-color: var(--sage-green); height: 75%;"></div>
+                            </div>
+                            <span class="text-xs text-gray-500 mt-2">Mon</span>
+                        </div>
+                        <div class="flex-1 flex flex-col items-center">
+                            <div class="w-full bg-gray-200 rounded-t flex flex-col justify-end" style="height: 100%;">
+                                <div class="chart-bar w-full rounded-t" style="background-color: var(--sage-green); height: 85%;"></div>
+                            </div>
+                            <span class="text-xs text-gray-500 mt-2">Tue</span>
+                        </div>
+                        <div class="flex-1 flex flex-col items-center">
+                            <div class="w-full bg-gray-200 rounded-t flex flex-col justify-end" style="height: 100%;">
+                                <div class="chart-bar w-full rounded-t" style="background-color: var(--sage-green); height: 90%;"></div>
+                            </div>
+                            <span class="text-xs text-gray-500 mt-2">Wed</span>
+                        </div>
+                        <div class="flex-1 flex flex-col items-center">
+                            <div class="w-full bg-gray-200 rounded-t flex flex-col justify-end" style="height: 100%;">
+                                <div class="chart-bar w-full rounded-t" style="background-color: var(--sage-green); height: 70%;"></div>
+                            </div>
+                            <span class="text-xs text-gray-500 mt-2">Thu</span>
+                        </div>
+                        <div class="flex-1 flex flex-col items-center">
+                            <div class="w-full bg-gray-200 rounded-t flex flex-col justify-end" style="height: 100%;">
+                                <div class="chart-bar w-full rounded-t" style="background-color: var(--sage-green); height: 95%;"></div>
+                            </div>
+                            <span class="text-xs text-gray-500 mt-2">Fri</span>
+                        </div>
+                        <div class="flex-1 flex flex-col items-center">
+                            <div class="w-full bg-gray-200 rounded-t flex flex-col justify-end" style="height: 100%;">
+                                <div class="chart-bar w-full rounded-t" style="background-color: var(--sage-green); height: 80%;"></div>
+                            </div>
+                            <span class="text-xs text-gray-500 mt-2">Sat</span>
+                        </div>
+                        <div class="flex-1 flex flex-col items-center">
+                            <div class="w-full bg-gray-200 rounded-t flex flex-col justify-end" style="height: 100%;">
+                                <div class="chart-bar w-full rounded-t" style="background-color: var(--terracotta); height: 65%;"></div>
+                            </div>
+                            <span class="text-xs text-gray-500 mt-2">Sun</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Meals Widget -->
+            <div id="recentMealsWidget" class="widget-card bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-bold mb-4" style="color: var(--deep-charcoal);">Recent Meals</h2>
+                <div class="space-y-3">
+                    <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                        <div class="w-12 h-12 rounded-lg flex items-center justify-center" style="background-color: rgba(74, 124, 89, 0.1);">
+                            <span class="text-2xl">🥑</span>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-semibold text-sm">Avocado Toast</p>
+                            <p class="text-xs text-gray-500">Breakfast • 420 cal</p>
+                        </div>
+                        <span class="text-xs text-gray-400">Today</span>
+                    </div>
+                    <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                        <div class="w-12 h-12 rounded-lg flex items-center justify-center" style="background-color: rgba(224, 122, 95, 0.1);">
+                            <span class="text-2xl">🥗</span>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-semibold text-sm">Grilled Chicken Salad</p>
+                            <p class="text-xs text-gray-500">Lunch • 380 cal</p>
+                        </div>
+                        <span class="text-xs text-gray-400">Today</span>
+                    </div>
+                    <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                        <div class="w-12 h-12 rounded-lg flex items-center justify-center" style="background-color: rgba(74, 124, 89, 0.1);">
+                            <span class="text-2xl">🍝</span>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-semibold text-sm">Classic Spaghetti</p>
+                            <p class="text-xs text-gray-500">Dinner • 650 cal</p>
+                        </div>
+                        <span class="text-xs text-gray-400">Today</span>
+                    </div>
+                    <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                        <div class="w-12 h-12 rounded-lg flex items-center justify-center" style="background-color: rgba(224, 122, 95, 0.1);">
+                            <span class="text-2xl">🥞</span>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-semibold text-sm">Protein Pancakes</p>
+                            <p class="text-xs text-gray-500">Breakfast • 350 cal</p>
+                        </div>
+                        <span class="text-xs text-gray-400">Yesterday</span>
+                    </div>
+                </div>
+                <a href="{{ url_for('calorie_tracker.calorie_tracker') }}" class="block mt-4 text-center text-sm font-medium hover:underline" style="color: var(--sage-green);">View All Meals →</a>
+            </div>
+
+            <!-- Upcoming Meals Widget -->
+            <div id="upcomingMealsWidget" class="widget-card bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-bold mb-4" style="color: var(--deep-charcoal);">Upcoming Meals</h2>
+                <div class="space-y-4">
+                    <div class="border-l-4 pl-3" style="border-color: var(--sage-green);">
+                        <p class="text-xs text-gray-500 mb-1">Tomorrow • Breakfast</p>
+                        <p class="font-semibold">Greek Yogurt Bowl</p>
+                        <p class="text-sm text-gray-600">320 cal • 25g protein</p>
+                    </div>
+                    <div class="border-l-4 pl-3" style="border-color: var(--terracotta);">
+                        <p class="text-xs text-gray-500 mb-1">Tomorrow • Lunch</p>
+                        <p class="font-semibold">Turkey Sandwich</p>
+                        <p class="text-sm text-gray-600">450 cal • 30g protein</p>
+                    </div>
+                    <div class="border-l-4 pl-3" style="border-color: var(--sage-green);">
+                        <p class="text-xs text-gray-500 mb-1">Tomorrow • Dinner</p>
+                        <p class="font-semibold">Salmon with Veggies</p>
+                        <p class="text-sm text-gray-600">520 cal • 42g protein</p>
+                    </div>
+                </div>
+                <a href="{{ url_for('calendar.calendar') }}" class="block mt-4 text-center text-sm font-medium hover:underline" style="color: var(--sage-green);">View Meal Plan →</a>
+            </div>
+
+            <!-- Goals Progress Widget -->
+            <div id="goalsWidget" class="widget-card bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-bold mb-4" style="color: var(--deep-charcoal);">My Goals</h2>
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-medium">Weekly Meal Planning</span>
+                            <span class="text-sm text-gray-500">6/7 days</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="h-2 rounded-full" style="background-color: var(--sage-green); width: 85.7%;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-medium">Daily Protein Goal (120g)</span>
+                            <span class="text-sm text-gray-500">90g</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="h-2 rounded-full" style="background-color: var(--terracotta); width: 75%;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-medium">Try New Recipes</span>
+                            <span class="text-sm text-gray-500">3/5 this month</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="h-2 rounded-full" style="background-color: var(--sage-green); width: 60%;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-medium">Stay Within Calorie Budget</span>
+                            <span class="text-sm text-gray-500">12/14 days</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="h-2 rounded-full" style="background-color: var(--terracotta); width: 85.7%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions Widget -->
+            <div id="quickActionsWidget" class="widget-card bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-bold mb-4" style="color: var(--deep-charcoal);">Quick Actions</h2>
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="window.location.href='calorie_tracker.html'" class="p-4 border-2 border-gray-200 rounded-lg hover:border-green-500 transition text-center">
+                        <svg class="w-8 h-8 mx-auto mb-2" style="color: var(--sage-green);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        <p class="text-sm font-medium">Log Meal</p>
+                    </button>
+                    <button onclick="window.location.href='recipe.html'" class="p-4 border-2 border-gray-200 rounded-lg hover:border-green-500 transition text-center">
+                        <svg class="w-8 h-8 mx-auto mb-2" style="color: var(--terracotta);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <p class="text-sm font-medium">Find Recipe</p>
+                    </button>
+                    <button onclick="window.location.href='calendar_template.html'" class="p-4 border-2 border-gray-200 rounded-lg hover:border-green-500 transition text-center">
+                        <svg class="w-8 h-8 mx-auto mb-2" style="color: var(--sage-green);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        <p class="text-sm font-medium">Plan Week</p>
+                    </button>
+                    <button onclick="window.location.href='shopping_list.html'" class="p-4 border-2 border-gray-200 rounded-lg hover:border-green-500 transition text-center">
+                        <svg class="w-8 h-8 mx-auto mb-2" style="color: var(--terracotta);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                        <p class="text-sm font-medium">Shopping List</p>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customize Dashboard Modal -->
+    <div id="customizeModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
+                <h2 class="text-2xl font-bold" style="color: var(--deep-charcoal);">Customize Your Dashboard</h2>
+                <button onclick="closeCustomizeModal()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="p-6">
+                <p class="text-gray-600 mb-6">Choose which statistics and widgets you want to see on your dashboard.</p>
+
+                <!-- Quick Stats Toggles -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold mb-4" style="color: var(--deep-charcoal);">Quick Stats</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-5 h-5" style="color: var(--sage-green);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path>
+                                </svg>
+                                <span class="font-medium">Today's Calories</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <select class="size-select px-2 py-1 border border-gray-300 rounded text-sm" onchange="changeWidgetSize('todayCalories', this.value)">
+                                    <option value="small">Small</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="large">Large</option>
+                                </select>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked onchange="toggleWidget('todayCalories')">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-5 h-5" style="color: var(--terracotta);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                                </svg>
+                                <span class="font-medium">Weekly Meals</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <select class="size-select px-2 py-1 border border-gray-300 rounded text-sm" onchange="changeWidgetSize('weeklyMeals', this.value)">
+                                    <option value="small">Small</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="large">Large</option>
+                                </select>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked onchange="toggleWidget('weeklyMeals')">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-5 h-5" style="color: var(--sage-green);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                </svg>
+                                <span class="font-medium">Saved Recipes</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <select class="size-select px-2 py-1 border border-gray-300 rounded text-sm" onchange="changeWidgetSize('savedRecipes', this.value)">
+                                    <option value="small">Small</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="large">Large</option>
+                                </select>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked onchange="toggleWidget('savedRecipes')">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-5 h-5" style="color: var(--terracotta);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+                                </svg>
+                                <span class="font-medium">Planning Streak</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <select class="size-select px-2 py-1 border border-gray-300 rounded text-sm" onchange="changeWidgetSize('planningStreak', this.value)">
+                                    <option value="small">Small</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="large">Large</option>
+                                </select>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked onchange="toggleWidget('planningStreak')">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dashboard Widgets Toggles -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold mb-4" style="color: var(--deep-charcoal);">Dashboard Widgets</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <span class="font-medium">Nutrition Overview</span>
+                            <div class="flex items-center gap-3">
+                                <select class="size-select px-2 py-1 border border-gray-300 rounded text-sm" onchange="changeWidgetSize('nutritionWidget', this.value)">
+                                    <option value="small">Small</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="large">Large</option>
+                                </select>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked onchange="toggleWidget('nutritionWidget')">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <span class="font-medium">Recent Meals</span>
+                            <div class="flex items-center gap-3">
+                                <select class="size-select px-2 py-1 border border-gray-300 rounded text-sm" onchange="changeWidgetSize('recentMealsWidget', this.value)">
+                                    <option value="small">Small</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="large">Large</option>
+                                </select>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked onchange="toggleWidget('recentMealsWidget')">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <span class="font-medium">Upcoming Meals</span>
+                            <div class="flex items-center gap-3">
+                                <select class="size-select px-2 py-1 border border-gray-300 rounded text-sm" onchange="changeWidgetSize('upcomingMealsWidget', this.value)">
+                                    <option value="small">Small</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="large">Large</option>
+                                </select>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked onchange="toggleWidget('upcomingMealsWidget')">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <span class="font-medium">Goals Progress</span>
+                            <div class="flex items-center gap-3">
+                                <select class="size-select px-2 py-1 border border-gray-300 rounded text-sm" onchange="changeWidgetSize('goalsWidget', this.value)">
+                                    <option value="small">Small</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="large">Large</option>
+                                </select>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked onchange="toggleWidget('goalsWidget')">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <span class="font-medium">Quick Actions</span>
+                            <div class="flex items-center gap-3">
+                                <select class="size-select px-2 py-1 border border-gray-300 rounded text-sm" onchange="changeWidgetSize('quickActionsWidget', this.value)">
+                                    <option value="small">Small</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="large">Large</option>
+                                </select>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked onchange="toggleWidget('quickActionsWidget')">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Save Button -->
+                <div class="flex gap-3">
+                    <button onclick="saveDashboardSettings()" class="flex-1 px-6 py-3 rounded-lg text-white font-medium hover:opacity-90 transition" style="background-color: var(--sage-green);">
+                        Save Preferences
+                    </button>
+                    <button onclick="resetDashboard()" class="px-6 py-3 border-2 border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition" style="color: var(--deep-charcoal);">
+                        Reset to Default
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dashboard settings stored in localStorage
+        let dashboardSettings = {
+            todayCalories: true,
+            weeklyMeals: true,
+            savedRecipes: true,
+            planningStreak: true,
+            nutritionWidget: true,
+            recentMealsWidget: true,
+            upcomingMealsWidget: true,
+            goalsWidget: true,
+            quickActionsWidget: true
+        };
+
+        let widgetOrder = [
+            'stat-todayCalories',
+            'stat-weeklyMeals', 
+            'stat-savedRecipes',
+            'stat-planningStreak',
+            'nutritionWidget',
+            'recentMealsWidget',
+            'upcomingMealsWidget',
+            'goalsWidget',
+            'quickActionsWidget'
+        ];
+
+        let widgetSizes = {
+            todayCalories: 'medium',
+            weeklyMeals: 'medium',
+            savedRecipes: 'medium',
+            planningStreak: 'medium',
+            nutritionWidget: 'medium',
+            recentMealsWidget: 'medium',
+            upcomingMealsWidget: 'medium',
+            goalsWidget: 'medium',
+            quickActionsWidget: 'medium'
+        };
+
+        let isArrangeMode = false;
+        let draggedElement = null;
+
+        // Load settings from localStorage
+        function loadDashboardSettings() {
+            const saved = localStorage.getItem('dashboardSettings');
+            if (saved) {
+                dashboardSettings = JSON.parse(saved);
+            }
+            
+            const savedOrder = localStorage.getItem('widgetOrder');
+            if (savedOrder) {
+                widgetOrder = JSON.parse(savedOrder);
+            }
+            
+            const savedSizes = localStorage.getItem('widgetSizes');
+            if (savedSizes) {
+                widgetSizes = JSON.parse(savedSizes);
+            }
+            
+            applyDashboardSettings();
+            applyWidgetOrder();
+            applyWidgetSizes();
+        }
+
+        // Apply settings to dashboard
+        function applyDashboardSettings() {
+            // Apply visibility to each widget
+            Object.keys(dashboardSettings).forEach(key => {
+                const element = document.getElementById(key) || document.getElementById('stat-' + key);
+                if (element) {
+                    element.style.display = dashboardSettings[key] ? '' : 'none';
+                }
+            });
+        }
+
+        // Apply widget order
+        function applyWidgetOrder() {
+            const statsSection = document.getElementById('quickStatsSection');
+            const widgetsGrid = statsSection.nextElementSibling;
+            
+            widgetOrder.forEach(widgetId => {
+                const widget = document.getElementById(widgetId);
+                if (widget) {
+                    if (widgetId.startsWith('stat-')) {
+                        statsSection.appendChild(widget);
+                    } else {
+                        widgetsGrid.appendChild(widget);
+                    }
+                }
+            });
+        }
+
+        // Apply widget sizes
+        function applyWidgetSizes() {
+            Object.keys(widgetSizes).forEach(key => {
+                const element = document.getElementById(key) || document.getElementById('stat-' + key);
+                if (element) {
+                    // Remove all size classes
+                    element.classList.remove('widget-small', 'widget-medium', 'widget-large');
+                    // Add current size class
+                    element.classList.add('widget-' + widgetSizes[key]);
+                }
+            });
+            
+            // Adjust grid layout based on widget sizes
+            adjustGridLayout();
+        }
+
+        // Adjust grid layout dynamically based on widget sizes
+        function adjustGridLayout() {
+            const grid = document.getElementById('mainWidgetsGrid');
+            if (!grid) return;
+            
+            // Count visible widgets and their sizes
+            const widgets = Array.from(grid.querySelectorAll('.widget-card')).filter(w => w.style.display !== 'none');
+            const largeCount = widgets.filter(w => w.classList.contains('widget-large')).length;
+            
+            // Adjust grid columns based on content
+            if (largeCount >= 2) {
+                grid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(300px, 1fr))';
+            } else {
+                grid.style.gridTemplateColumns = '';
+                grid.className = 'grid grid-cols-1 lg:grid-cols-3 gap-6';
+                grid.style.gridAutoFlow = 'dense';
+            }
+        }
+
+        // Change widget size
+        function changeWidgetSize(widgetId, size) {
+            widgetSizes[widgetId] = size;
+            applyWidgetSizes();
+            
+            // Update the corresponding select in modal if it exists
+            const selects = document.querySelectorAll('.size-select');
+            selects.forEach(select => {
+                if (select.getAttribute('onchange') && select.getAttribute('onchange').includes(widgetId)) {
+                    select.value = size;
+                }
+            });
+        }
+
+        // Toggle arrange mode
+        function toggleArrangeMode() {
+            isArrangeMode = !isArrangeMode;
+            const arrangeBtn = document.getElementById('arrangeBtn');
+            const arrangeBtnText = document.getElementById('arrangeBtnText');
+            
+            if (isArrangeMode) {
+                arrangeBtn.style.backgroundColor = 'var(--sage-green)';
+                arrangeBtn.style.color = 'white';
+                arrangeBtnText.textContent = 'Done Arranging';
+                enableDragAndDrop();
+                addJiggleEffect();
+            } else {
+                arrangeBtn.style.backgroundColor = '';
+                arrangeBtn.style.color = 'var(--sage-green)';
+                arrangeBtnText.textContent = 'Arrange Widgets';
+                disableDragAndDrop();
+                removeJiggleEffect();
+                saveWidgetOrder();
+            }
+        }
+
+        // Add jiggle effect to all visible widgets
+        function addJiggleEffect() {
+            document.querySelectorAll('.stat-card, .widget-card').forEach(widget => {
+                if (widget.style.display !== 'none') {
+                    widget.classList.add('jiggle');
+                }
+            });
+        }
+
+        // Remove jiggle effect
+        function removeJiggleEffect() {
+            document.querySelectorAll('.stat-card, .widget-card').forEach(widget => {
+                widget.classList.remove('jiggle');
+            });
+        }
+
+        // Enable drag and drop
+        function enableDragAndDrop() {
+            document.querySelectorAll('.stat-card, .widget-card').forEach(widget => {
+                if (widget.style.display !== 'none') {
+                    widget.draggable = true;
+                    widget.classList.add('draggable');
+                    widget.addEventListener('dragstart', handleDragStart);
+                    widget.addEventListener('dragover', handleDragOver);
+                    widget.addEventListener('drop', handleDrop);
+                    widget.addEventListener('dragend', handleDragEnd);
+                }
+            });
+        }
+
+        // Disable drag and drop
+        function disableDragAndDrop() {
+            document.querySelectorAll('.stat-card, .widget-card').forEach(widget => {
+                widget.draggable = false;
+                widget.classList.remove('draggable');
+                widget.removeEventListener('dragstart', handleDragStart);
+                widget.removeEventListener('dragover', handleDragOver);
+                widget.removeEventListener('drop', handleDrop);
+                widget.removeEventListener('dragend', handleDragEnd);
+            });
+        }
+
+        // Drag and drop handlers
+        function handleDragStart(e) {
+            draggedElement = this;
+            this.style.opacity = '0.5';
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+            
+            if (draggedElement !== this) {
+                const parent = this.parentNode;
+                const draggedIndex = Array.from(parent.children).indexOf(draggedElement);
+                const targetIndex = Array.from(parent.children).indexOf(this);
+                
+                if (draggedIndex < targetIndex) {
+                    parent.insertBefore(draggedElement, this.nextSibling);
+                } else {
+                    parent.insertBefore(draggedElement, this);
+                }
+            }
+            
+            return false;
+        }
+
+        function handleDragEnd(e) {
+            this.style.opacity = '';
+            draggedElement = null;
+        }
+
+        // Save widget order
+        function saveWidgetOrder() {
+            const newOrder = [];
+            
+            // Get order from stats section
+            document.querySelectorAll('#quickStatsSection .stat-card').forEach(widget => {
+                if (widget.id) {
+                    newOrder.push(widget.id);
+                }
+            });
+            
+            // Get order from widgets grid
+            document.querySelectorAll('#quickStatsSection + div .widget-card').forEach(widget => {
+                if (widget.id) {
+                    newOrder.push(widget.id);
+                }
+            });
+            
+            widgetOrder = newOrder;
+            localStorage.setItem('widgetOrder', JSON.stringify(widgetOrder));
+            showToast('Widget arrangement saved!', 'success');
+        }
+
+        // Toggle widget visibility
+        function toggleWidget(widgetId) {
+            dashboardSettings[widgetId] = !dashboardSettings[widgetId];
+            applyDashboardSettings();
+        }
+
+        // Show customize modal
+        function showCustomizeModal() {
+            // Sync all size selects with current values
+            Object.keys(widgetSizes).forEach(widgetId => {
+                const selects = document.querySelectorAll('.size-select');
+                selects.forEach(select => {
+                    if (select.getAttribute('onchange') && select.getAttribute('onchange').includes(widgetId)) {
+                        select.value = widgetSizes[widgetId];
+                    }
+                });
+            });
+            
+            document.getElementById('customizeModal').classList.remove('hidden');
+        }
+
+        // Close customize modal
+        function closeCustomizeModal() {
+            document.getElementById('customizeModal').classList.add('hidden');
+        }
+
+        // Save dashboard settings
+        function saveDashboardSettings() {
+            localStorage.setItem('dashboardSettings', JSON.stringify(dashboardSettings));
+            localStorage.setItem('widgetSizes', JSON.stringify(widgetSizes));
+            closeCustomizeModal();
+            showToast('Dashboard preferences saved successfully!', 'success');
+        }
+
+        // Reset dashboard to defaults
+        function resetDashboard() {
+            if (confirm('Are you sure you want to reset your dashboard to default settings?')) {
+                dashboardSettings = {
+                    todayCalories: true,
+                    weeklyMeals: true,
+                    savedRecipes: true,
+                    planningStreak: true,
+                    nutritionWidget: true,
+                    recentMealsWidget: true,
+                    upcomingMealsWidget: true,
+                    goalsWidget: true,
+                    quickActionsWidget: true
+                };
+                
+                widgetOrder = [
+                    'stat-todayCalories',
+                    'stat-weeklyMeals', 
+                    'stat-savedRecipes',
+                    'stat-planningStreak',
+                    'nutritionWidget',
+                    'recentMealsWidget',
+                    'upcomingMealsWidget',
+                    'goalsWidget',
+                    'quickActionsWidget'
+                ];
+                
+                widgetSizes = {
+                    todayCalories: 'medium',
+                    weeklyMeals: 'medium',
+                    savedRecipes: 'medium',
+                    planningStreak: 'medium',
+                    nutritionWidget: 'medium',
+                    recentMealsWidget: 'medium',
+                    upcomingMealsWidget: 'medium',
+                    goalsWidget: 'medium',
+                    quickActionsWidget: 'medium'
+                };
+                
+                // Update toggle switches in modal
+                const checkboxes = document.querySelectorAll('#customizeModal input[type="checkbox"]');
+                checkboxes.forEach(cb => cb.checked = true);
+                
+                // Update size selects in modal
+                const sizeSelects = document.querySelectorAll('#customizeModal select.size-select');
+                sizeSelects.forEach(select => select.value = 'medium');
+                
+                applyDashboardSettings();
+                applyWidgetOrder();
+                applyWidgetSizes();
+                localStorage.setItem('dashboardSettings', JSON.stringify(dashboardSettings));
+                localStorage.setItem('widgetOrder', JSON.stringify(widgetOrder));
+                localStorage.setItem('widgetSizes', JSON.stringify(widgetSizes));
+                showToast('Dashboard reset to default settings', 'info');
+            }
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'info') {
+            const colors = {
+                success: '#4A7C59',
+                error: '#E07A5F',
+                info: '#3D405B'
+            };
+
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-4 right-4 px-6 py-4 rounded-lg shadow-lg text-white z-50';
+            toast.style.backgroundColor = colors[type];
+            toast.textContent = message;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Notification dropdown functionality
+        function toggleNotificationDropdown() {
+            const dropdown = document.getElementById('notificationDropdown');
+            dropdown.classList.toggle('hidden');
+        }
+
+        function markAllAsRead() {
+            const badge = document.getElementById('navBadge');
+            badge.classList.add('hidden');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('notificationDropdown');
+            const button = event.target.closest('button');
+            
+            if (!dropdown.contains(event.target) && (!button || !button.onclick || button.onclick.toString().indexOf('toggleNotificationDropdown') === -1)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        // Close customize modal when clicking outside
+        document.getElementById('customizeModal').addEventListener('click', function(e) {
+            if (e.target === this) closeCustomizeModal();
+        });
+
+        // Initialize dashboard
+        loadDashboardSettings();
+    </script>
+    </div>
+</body>
+</html>
