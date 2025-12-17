@@ -338,13 +338,13 @@
                         <thead>
                             <tr style="background-color: var(--sage-green);">
                                 <th class="py-4 px-4 text-white font-semibold text-left w-32">Meal Time</th>
-                                <th class="py-4 px-2 text-white font-semibold text-center day-header" id="header-0">Monday<span class="date-num" id="date-0"></span></th>
-                                <th class="py-4 px-2 text-white font-semibold text-center day-header" id="header-1">Tuesday<span class="date-num" id="date-1"></span></th>
-                                <th class="py-4 px-2 text-white font-semibold text-center day-header" id="header-2">Wednesday<span class="date-num" id="date-2"></span></th>
-                                <th class="py-4 px-2 text-white font-semibold text-center day-header" id="header-3">Thursday<span class="date-num" id="date-3"></span></th>
-                                <th class="py-4 px-2 text-white font-semibold text-center day-header" id="header-4">Friday<span class="date-num" id="date-4"></span></th>
-                                <th class="py-4 px-2 text-white font-semibold text-center day-header" id="header-5">Saturday<span class="date-num" id="date-5"></span></th>
-                                <th class="py-4 px-2 text-white font-semibold text-center day-header" id="header-6">Sunday<span class="date-num" id="date-6"></span></th>
+                                <th class="py-4 px-2 text-white font-semibold text-center day-header" id="header-0">Sunday<span class="date-num" id="date-0"></span></th>
+                                <th class="py-4 px-2 text-white font-semibold text-center day-header" id="header-1">Monday<span class="date-num" id="date-1"></span></th>
+                                <th class="py-4 px-2 text-white font-semibold text-center day-header" id="header-2">Tuesday<span class="date-num" id="date-2"></span></th>
+                                <th class="py-4 px-2 text-white font-semibold text-center day-header" id="header-3">Wednesday<span class="date-num" id="date-3"></span></th>
+                                <th class="py-4 px-2 text-white font-semibold text-center day-header" id="header-4">Thursday<span class="date-num" id="date-4"></span></th>
+                                <th class="py-4 px-2 text-white font-semibold text-center day-header" id="header-5">Friday<span class="date-num" id="date-5"></span></th>
+                                <th class="py-4 px-2 text-white font-semibold text-center day-header" id="header-6">Saturday<span class="date-num" id="date-6"></span></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -608,11 +608,11 @@
             renderMealPlan();
         }
 
-        // Helper: Get Monday of the current week
-        function getMondayOfWeek(date) {
+        // Helper: Get Sunday of the current week (week starts on Sunday)
+        function getSundayOfWeek(date) {
             const d = new Date(date);
-            const day = d.getDay();
-            const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+            const day = d.getDay(); // 0 = Sunday, 6 = Saturday
+            const diff = d.getDate() - day; // Go back to Sunday
             return new Date(d.setDate(diff));
         }
 
@@ -621,14 +621,17 @@
             return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         }
 
-        // Helper: Get ISO date string (YYYY-MM-DD)
+        // Helper: Get ISO date string (YYYY-MM-DD) in LOCAL timezone
         function getISODate(date) {
-            return date.toISOString().split('T')[0];
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
         }
 
         // Initialize the calendar with current week
         async function initCalendar() {
-            currentWeekStart = getMondayOfWeek(getToday());
+            currentWeekStart = getSundayOfWeek(getToday());
             updateWeekDisplay();
             updateSlotStates();
             setupSlotListeners();
@@ -655,7 +658,7 @@
             }
 
             // Check if previous week button should be disabled
-            const minWeekStart = getMondayOfWeek(getToday());
+            const minWeekStart = getSundayOfWeek(getToday());
             const prevBtn = document.getElementById('prevWeekBtn');
             if (currentWeekStart <= minWeekStart) {
                 prevBtn.style.opacity = '0.3';
@@ -716,7 +719,7 @@
         }
 
         async function previousWeek() {
-            const minWeekStart = getMondayOfWeek(getToday());
+            const minWeekStart = getSundayOfWeek(getToday());
             if (currentWeekStart <= minWeekStart) {
                 alert('Cannot navigate to past weeks.');
                 return;
