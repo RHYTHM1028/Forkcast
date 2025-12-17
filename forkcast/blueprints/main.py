@@ -5,9 +5,11 @@ This blueprint handles:
     - Landing page (index)
     - Home page
     - Logged-in home/dashboard
+    - Favicon
 """
 
-from flask import Blueprint, render_template, redirect, url_for, session
+from flask import Blueprint, render_template, redirect, url_for, session, send_from_directory, current_app
+import os
 
 from ..helpers import login_required, get_current_user
 
@@ -50,3 +52,13 @@ def logged_in_home():
     """
     user = get_current_user()
     return render_template('logged_in_home.html', user=user)
+
+
+@main_bp.route('/favicon.ico')
+def favicon():
+    """Serve favicon."""
+    return send_from_directory(
+        os.path.join(current_app.root_path, 'static', 'images'),
+        'logo.png',
+        mimetype='image/png'
+    )
