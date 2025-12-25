@@ -1,0 +1,12 @@
+# Forkcast Requirements
+# Core dependencies for the Flask application
+
+# Flask web framework
+Flask==3.0.0
+Werkzeug==3.0.1
+
+# Database
+psycopg2-binary==2.9.9
+
+# Environment variables
+python-dotenv==1.0.0
