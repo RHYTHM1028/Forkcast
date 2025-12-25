@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cooking: {{ recipe.title }} - Forkcast</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --sage-green: #4A7C59;
+            --terracotta: #E07A5F;
+            --eggshell: #F4F1DE;
+            --white: #FFFFFF;
+            --deep-charcoal: #3D405B;
+        }
+
+        body {
+            background-color: var(--eggshell);
+            color: var(--deep-charcoal);
+            min-height: 100vh;
+        }
+
+        .ingredient-item {
+            transition: all 0.2s ease;
+        }
+
+        .ingredient-item.checked {
+            opacity: 0.5;
+            text-decoration: line-through;
+        }
+
+        .step-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+
+        .step-card.active {
+            border-left-color: var(--sage-green);
+            background-color: rgba(74, 124, 89, 0.1);
+            transform: scale(1.02);
+        }
+
+        .step-card.completed {
+            opacity: 0.6;
+            border-left-color: var(--terracotta);
+        }
+
+        .step-card.completed .step-number {
+            background-color: var(--terracotta) !important;
+        }
+
+        .step-number {
+            transition: all 0.3s ease;
+        }
+
+        .timer-display {
+            font-family: 'Courier New', monospace;
+            font-size: 3rem;
+            font-weight: bold;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background-color: #e5e7eb;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--sage-green);
+            transition: width 0.3s ease;
+        }
+
+        .floating-controls {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+        }
+
+        @media (max-width: 768px) {
+            .timer-display {
+                font-size: 2rem;
+            }
+        }
+
+        /* Keep screen awake indicator */
+        .wake-lock-indicator {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <a href="javascript:history.back()" class="flex items-center gap-2 text-gray-600 hover:text-gray-800">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                        <span class="hidden sm:inline">Back</span>
+                    </a>
+                    <div class="h-6 w-px bg-gray-300"></div>
+                    <h1 class="text-xl font-bold truncate" style="color: var(--deep-charcoal);">{{ recipe.title }}</h1>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleWakeLock()" id="wakeLockBtn" 
+                            class="p-2 rounded-lg hover:bg-gray-100 transition" title="Keep screen on">
+                        <svg class="w-6 h-6" id="wakeLockIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                        </svg>
+                    </button>
+                    <span class="text-sm text-gray-500" id="progressText">Step 0/0</span>
+                </div>
+            </div>
+            <!-- Progress Bar -->
+            <div class="progress-bar mt-3">
+                <div class="progress-fill" id="progressBar" style="width: 0%"></div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-6xl mx-auto px-4 py-6 pb-32">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Left Column: Ingredients & Timer -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- Recipe Info Card -->
+                <div class="bg-white rounded-xl shadow-md p-5">
+                    {% if recipe.image_url %}
+                    <img src="{{ recipe.image_url }}" alt="{{ recipe.title }}" class="w-full h-40 object-cover rounded-lg mb-4">
+                    {% endif %}
+                    <div class="flex flex-wrap gap-3 text-sm text-gray-600">
+                        {% if recipe.prep_time or recipe.cook_time %}
+                        <div class="flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span>{{ (recipe.prep_time or 0) + (recipe.cook_time or 0) }} min</span>
+                        </div>
+                        {% endif %}
+                        {% if recipe.servings %}
+                        <div class="flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                            <span>{{ recipe.servings }} servings</span>
+                        </div>
+                        {% endif %}
+                        {% if recipe.calories %}
+                        <div class="flex items-center gap-1 font-semibold" style="color: var(--terracotta);">
+                            <span>{{ recipe.calories }} cal</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Timer Card -->
+                <div class="bg-white rounded-xl shadow-md p-5">
+                    <h3 class="text-lg font-bold mb-4 flex items-center gap-2" style="color: var(--deep-charcoal);">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Timer
+                    </h3>
+                    <div class="text-center">
+                        <!-- Editable Timer Display -->
+                        <div class="flex items-center justify-center gap-1" id="timerInputContainer">
+                            <input type="number" id="timerMinutes" min="0" max="999" value="00" 
+                                   class="timer-display w-24 text-center bg-transparent border-b-2 border-gray-300 focus:border-sage-green focus:outline-none"
+                                   style="color: var(--deep-charcoal);"
+                                   onchange="updateTimerFromInput()" onclick="this.select()">
+                            <span class="timer-display" style="color: var(--deep-charcoal);">:</span>
+                            <input type="number" id="timerSeconds" min="0" max="59" value="00" 
+                                   class="timer-display w-24 text-center bg-transparent border-b-2 border-gray-300 focus:border-sage-green focus:outline-none"
+                                   style="color: var(--deep-charcoal);"
+                                   onchange="updateTimerFromInput()" onclick="this.select()">
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Click to edit time</p>
+                        <div class="flex justify-center gap-2 mt-4">
+                            <button onclick="addTime(1)" class="px-3 py-2 rounded-lg text-sm font-medium bg-gray-100 hover:bg-gray-200 transition">+1m</button>
+                            <button onclick="addTime(5)" class="px-3 py-2 rounded-lg text-sm font-medium bg-gray-100 hover:bg-gray-200 transition">+5m</button>
+                            <button onclick="addTime(10)" class="px-3 py-2 rounded-lg text-sm font-medium bg-gray-100 hover:bg-gray-200 transition">+10m</button>
+                        </div>
+                        <div class="flex justify-center gap-2 mt-3">
+                            <button onclick="startTimer()" id="startBtn" 
+                                    class="px-4 py-2 rounded-lg text-white font-medium transition"
+                                    style="background-color: var(--sage-green);">
+                                Start
+                            </button>
+                            <button onclick="pauseTimer()" id="pauseBtn" 
+                                    class="px-4 py-2 rounded-lg text-white font-medium transition hidden"
+                                    style="background-color: var(--terracotta);">
+                                Pause
+                            </button>
+                            <button onclick="resetTimer()" 
+                                    class="px-4 py-2 rounded-lg font-medium border-2 hover:bg-gray-50 transition"
+                                    style="border-color: var(--deep-charcoal); color: var(--deep-charcoal);">
+                                Reset
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ingredients Card -->
+                <div class="bg-white rounded-xl shadow-md p-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold flex items-center gap-2" style="color: var(--deep-charcoal);">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                            </svg>
+                            Ingredients
+                        </h3>
+                        <span class="text-sm text-gray-500" id="ingredientCount">0/0</span>
+                    </div>
+                    <ul id="ingredientsList" class="space-y-2">
+                        <!-- Ingredients will be populated by JS -->
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Right Column: Steps -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl shadow-md p-5">
+                    <h3 class="text-lg font-bold mb-4 flex items-center gap-2" style="color: var(--deep-charcoal);">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                        </svg>
+                        Cooking Steps
+                    </h3>
+                    <div id="stepsList" class="space-y-4">
+                        <!-- Steps will be populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Navigation Controls -->
+    <div class="floating-controls">
+        <div class="bg-white rounded-full shadow-lg px-6 py-3 flex items-center gap-4">
+            <button onclick="previousStep()" id="prevBtn" 
+                    class="p-3 rounded-full hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled>
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+            </button>
+            <button onclick="markCurrentStepDone()" id="doneBtn"
+                    class="px-6 py-3 rounded-full text-white font-medium transition"
+                    style="background-color: var(--sage-green);">
+                <svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                Done
+            </button>
+            <button onclick="nextStep()" id="nextBtn" 
+                    class="p-3 rounded-full hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Completion Modal -->
+    <div id="completionModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
+        <div class="bg-white rounded-xl max-w-md w-full p-8 text-center">
+            <div class="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center" style="background-color: rgba(74, 124, 89, 0.1);">
+                <svg class="w-10 h-10" style="color: var(--sage-green);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+            <h2 class="text-2xl font-bold mb-2" style="color: var(--deep-charcoal);">Recipe Complete! 🎉</h2>
+            <p class="text-gray-600 mb-6">Congratulations! You've finished cooking <strong>{{ recipe.title }}</strong>. Enjoy your meal!</p>
+            <div class="flex flex-col gap-3">
+                <a href="{{ url_for('recipes.recipes') }}" 
+                   class="px-6 py-3 rounded-lg text-white font-medium transition"
+                   style="background-color: var(--sage-green);">
+                    Back to Recipes
+                </a>
+                <button onclick="closeCompletionModal()" 
+                        class="px-6 py-3 rounded-lg font-medium border-2 hover:bg-gray-50 transition"
+                        style="border-color: var(--deep-charcoal); color: var(--deep-charcoal);">
+                    Back
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Recipe data
+        const recipeIngredients = `{{ recipe.ingredients | replace('\n', '\\n') | replace('\r', '') }}`.split('\n').filter(i => i.trim());
+        const recipeSteps = `{{ recipe.instructions | replace('\n', '\\n') | replace('\r', '') }}`.split('\n').filter(s => s.trim());
+        
+        // State
+        let currentStep = 0;
+        let completedSteps = new Set();
+        let checkedIngredients = new Set();
+        let timerSeconds = 0;
+        let timerInterval = null;
+        let timerRunning = false;
+        let wakeLock = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            renderIngredients();
+            renderSteps();
+            updateProgress();
+            updateNavigationButtons();
+        });
+
+        // Render ingredients with checkboxes
+        function renderIngredients() {
+            const container = document.getElementById('ingredientsList');
+            container.innerHTML = recipeIngredients.map((ing, index) => `
+                <li class="ingredient-item flex items-start gap-3 p-2 rounded-lg cursor-pointer hover:bg-gray-50 ${checkedIngredients.has(index) ? 'checked' : ''}"
+                    onclick="toggleIngredient(${index})">
+                    <div class="flex-shrink-0 mt-0.5">
+                        <div class="w-5 h-5 rounded border-2 flex items-center justify-center transition ${checkedIngredients.has(index) ? 'bg-green-500 border-green-500' : 'border-gray-300'}">
+                            ${checkedIngredients.has(index) ? '<svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>' : ''}
+                        </div>
+                    </div>
+                    <span class="flex-1">${escapeHtml(ing.trim())}</span>
+                </li>
+            `).join('');
+            updateIngredientCount();
+        }
+
+        // Toggle ingredient checked state
+        function toggleIngredient(index) {
+            if (checkedIngredients.has(index)) {
+                checkedIngredients.delete(index);
+            } else {
+                checkedIngredients.add(index);
+            }
+            renderIngredients();
+        }
+
+        // Update ingredient count
+        function updateIngredientCount() {
+            document.getElementById('ingredientCount').textContent = 
+                `${checkedIngredients.size}/${recipeIngredients.length}`;
+        }
+
+        // Render steps
+        function renderSteps() {
+            const container = document.getElementById('stepsList');
+            container.innerHTML = recipeSteps.map((step, index) => `
+                <div class="step-card p-4 rounded-xl bg-gray-50 cursor-pointer ${index === currentStep ? 'active' : ''} ${completedSteps.has(index) ? 'completed' : ''}"
+                     onclick="goToStep(${index})" id="step-${index}">
+                    <div class="flex gap-4">
+                        <div class="step-number flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
+                             style="background-color: ${completedSteps.has(index) ? 'var(--terracotta)' : 'var(--sage-green)'};">
+                            ${completedSteps.has(index) ? '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>' : index + 1}
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-lg ${completedSteps.has(index) ? 'line-through' : ''}">${escapeHtml(step.trim())}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Go to specific step
+        function goToStep(index) {
+            currentStep = index;
+            renderSteps();
+            updateProgress();
+            updateNavigationButtons();
+            scrollToStep(index);
+        }
+
+        // Scroll to step
+        function scrollToStep(index) {
+            const stepEl = document.getElementById(`step-${index}`);
+            if (stepEl) {
+                stepEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        // Mark current step as done
+        function markCurrentStepDone() {
+            completedSteps.add(currentStep);
+            
+            // Auto-advance to next step if not the last
+            if (currentStep < recipeSteps.length - 1) {
+                currentStep++;
+                renderSteps();
+                updateProgress();
+                updateNavigationButtons();
+                scrollToStep(currentStep);
+            } else {
+                // All steps completed
+                renderSteps();
+                updateProgress();
+                checkCompletion();
+            }
+        }
+
+        // Previous step
+        function previousStep() {
+            if (currentStep > 0) {
+                currentStep--;
+                renderSteps();
+                updateProgress();
+                updateNavigationButtons();
+                scrollToStep(currentStep);
+            }
+        }
+
+        // Next step
+        function nextStep() {
+            if (currentStep < recipeSteps.length - 1) {
+                currentStep++;
+                renderSteps();
+                updateProgress();
+                updateNavigationButtons();
+                scrollToStep(currentStep);
+            }
+        }
+
+        // Update navigation buttons
+        function updateNavigationButtons() {
+            document.getElementById('prevBtn').disabled = currentStep === 0;
+            document.getElementById('nextBtn').disabled = currentStep === recipeSteps.length - 1;
+            
+            // Update done button text
+            const doneBtn = document.getElementById('doneBtn');
+            if (currentStep === recipeSteps.length - 1 && !completedSteps.has(currentStep)) {
+                doneBtn.innerHTML = `
+                    <svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    Finish
+                `;
+            } else {
+                doneBtn.innerHTML = `
+                    <svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    Done
+                `;
+            }
+        }
+
+        // Update progress
+        function updateProgress() {
+            const progress = (completedSteps.size / recipeSteps.length) * 100;
+            document.getElementById('progressBar').style.width = `${progress}%`;
+            document.getElementById('progressText').textContent = `Step ${currentStep + 1}/${recipeSteps.length}`;
+        }
+
+        // Check if all steps completed
+        function checkCompletion() {
+            if (completedSteps.size === recipeSteps.length) {
+                document.getElementById('completionModal').classList.remove('hidden');
+            }
+        }
+
+        // Restart cooking
+        function restartCooking() {
+            currentStep = 0;
+            completedSteps.clear();
+            checkedIngredients.clear();
+            document.getElementById('completionModal').classList.add('hidden');
+            renderIngredients();
+            renderSteps();
+            updateProgress();
+            updateNavigationButtons();
+            resetTimer();
+        }
+
+        // Timer functions
+        function addTime(minutes) {
+            timerSeconds += minutes * 60;
+            updateTimerDisplay();
+        }
+
+        function updateTimerFromInput() {
+            const mins = parseInt(document.getElementById('timerMinutes').value) || 0;
+            const secs = parseInt(document.getElementById('timerSeconds').value) || 0;
+            timerSeconds = (mins * 60) + Math.min(secs, 59);
+            updateTimerDisplay();
+        }
+
+        function startTimer() {
+            // Read from input fields if timer is at 0
+            if (timerSeconds <= 0) {
+                updateTimerFromInput();
+            }
+            if (timerSeconds <= 0) {
+                timerSeconds = 60; // Default 1 minute if still not set
+            }
+            timerRunning = true;
+            document.getElementById('startBtn').classList.add('hidden');
+            document.getElementById('pauseBtn').classList.remove('hidden');
+            
+            // Disable inputs while running
+            document.getElementById('timerMinutes').readOnly = true;
+            document.getElementById('timerSeconds').readOnly = true;
+            
+            timerInterval = setInterval(() => {
+                if (timerSeconds > 0) {
+                    timerSeconds--;
+                    updateTimerDisplay();
+                } else {
+                    pauseTimer();
+                    playAlarm();
+                }
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            timerRunning = false;
+            clearInterval(timerInterval);
+            document.getElementById('startBtn').classList.remove('hidden');
+            document.getElementById('pauseBtn').classList.add('hidden');
+            
+            // Re-enable inputs when paused
+            document.getElementById('timerMinutes').readOnly = false;
+            document.getElementById('timerSeconds').readOnly = false;
+        }
+
+        function resetTimer() {
+            pauseTimer();
+            timerSeconds = 0;
+            updateTimerDisplay();
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timerSeconds / 60);
+            const seconds = timerSeconds % 60;
+            document.getElementById('timerMinutes').value = minutes.toString().padStart(2, '0');
+            document.getElementById('timerSeconds').value = seconds.toString().padStart(2, '0');
+        }
+
+        // Close completion modal (back to finished state)
+        function closeCompletionModal() {
+            document.getElementById('completionModal').classList.add('hidden');
+        }
+
+        function playAlarm() {
+            // Simple beep using Web Audio API
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 800;
+                oscillator.type = 'sine';
+                gainNode.gain.value = 0.5;
+                
+                oscillator.start();
+                
+                // Beep pattern
+                setTimeout(() => oscillator.stop(), 200);
+                setTimeout(() => {
+                    const osc2 = audioContext.createOscillator();
+                    osc2.connect(gainNode);
+                    osc2.frequency.value = 800;
+                    osc2.type = 'sine';
+                    osc2.start();
+                    setTimeout(() => osc2.stop(), 200);
+                }, 300);
+                setTimeout(() => {
+                    const osc3 = audioContext.createOscillator();
+                    osc3.connect(gainNode);
+                    osc3.frequency.value = 800;
+                    osc3.type = 'sine';
+                    osc3.start();
+                    setTimeout(() => osc3.stop(), 400);
+                }, 600);
+            } catch (e) {
+                console.log('Audio not supported');
+            }
+            
+            alert('Timer finished!');
+        }
+
+        // Wake Lock API to keep screen on
+        async function toggleWakeLock() {
+            const btn = document.getElementById('wakeLockBtn');
+            const icon = document.getElementById('wakeLockIcon');
+            
+            if (wakeLock !== null) {
+                await wakeLock.release();
+                wakeLock = null;
+                icon.style.color = '';
+                btn.title = 'Keep screen on';
+            } else {
+                try {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    icon.style.color = 'var(--sage-green)';
+                    btn.title = 'Screen will stay on';
+                    
+                    wakeLock.addEventListener('release', () => {
+                        icon.style.color = '';
+                    });
+                } catch (err) {
+                    console.log('Wake Lock not supported:', err);
+                    alert('Screen wake lock is not supported on this device/browser');
+                }
+            }
+        }
+
+        // Utility function
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowLeft') {
+                previousStep();
+            } else if (e.key === 'ArrowRight') {
+                nextStep();
+            } else if (e.key === ' ' || e.key === 'Enter') {
+                e.preventDefault();
+                markCurrentStepDone();
+            }
+        });
+    </script>
+    <script src="/static/js/meal-reminders.js"></script>
+</body>
+</html>

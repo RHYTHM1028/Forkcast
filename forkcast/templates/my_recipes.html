@@ -1,0 +1,1877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Recipes - Forkcast</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --sage-green: #4A7C59;
+            --terracotta: #E07A5F;
+            --eggshell: #F4F1DE;
+            --white: #FFFFFF;
+            --deep-charcoal: #3D405B;
+        }
+
+        .recipe-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        }
+
+        .recipe-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.85);
+            box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.3);
+        }
+
+        .tab-button {
+            transition: all 0.3s ease;
+        }
+
+        .tab-button.active {
+            background-color: var(--sage-green);
+            color: white;
+        }
+
+        .ingredient-item, .step-item {
+            transition: background-color 0.2s ease;
+        }
+
+        .ingredient-item:hover, .step-item:hover {
+            background-color: #f9fafb;
+        }
+
+        .forked-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+            background-color: rgba(224, 122, 95, 0.1);
+            color: var(--terracotta);
+            font-weight: 600;
+        }
+
+        .image-upload-container {
+            position: relative;
+            border: 2px dashed #d1d5db;
+            border-radius: 0.5rem;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: #f9fafb;
+        }
+
+        .image-upload-container:hover {
+            border-color: var(--sage-green);
+            background-color: rgba(74, 124, 89, 0.05);
+        }
+
+        .image-upload-container.has-image {
+            padding: 0;
+            border-style: solid;
+            border-color: var(--sage-green);
+        }
+
+        .image-preview {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 0.375rem;
+        }
+
+        .image-upload-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border-radius: 0.375rem;
+        }
+
+        .image-upload-container.has-image:hover .image-upload-overlay {
+            opacity: 1;
+        }
+
+        .remove-image-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .image-upload-container.has-image:hover .remove-image-btn {
+            opacity: 1;
+        }
+
+        /* Sidebar Navigation Styles */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            width: 70px;
+            background-color: var(--sage-green);
+            transition: width 0.3s ease;
+            z-index: 1000;
+            overflow: hidden;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar:hover {
+            width: 250px;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            opacity: 0.5;
+            white-space: nowrap;
+        }
+
+        .sidebar-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-item.active {
+            opacity: 1;
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .sidebar-item svg {
+            min-width: 24px;
+            width: 24px;
+            height: 24px;
+            margin-right: 0;
+            transition: margin-right 0.3s ease;
+        }
+
+        .sidebar:hover .sidebar-item svg {
+            margin-right: 1rem;
+        }
+
+        .sidebar-label {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .sidebar:hover .sidebar-label {
+            opacity: 1;
+        }
+
+        .sidebar-logo {
+            padding: 1.5rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .sidebar-logo img {
+            width: 40px;
+            height: 40px;
+            min-width: 40px;
+        }
+
+        .sidebar-logo-text {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            white-space: nowrap;
+        }
+
+        .sidebar:hover .sidebar-logo-text {
+            opacity: 1;
+        }
+
+        .sidebar-footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .main-content {
+            margin-left: 70px;
+            transition: margin-left 0.3s ease;
+        }
+
+        body {
+            overflow-x: hidden;
+        }
+    </style>
+</head>
+<body style="background-color: var(--eggshell); color: var(--deep-charcoal);">
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="sidebar-logo">
+            <img src="/static/images/logo.png" alt="Forkcast Logo">
+            <span class="sidebar-logo-text"><span style="color: #E07A5F;">FORK</span><span style="color: #F4F1DE;">CAST</span></span>
+        </div>
+        
+        <a href="{{ url_for('main.logged_in_home') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+            </svg>
+            <span class="sidebar-label">Home</span>
+        </a>
+        
+        <a href="{{ url_for('dashboard.dashboard') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 12a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1v-7z"></path>
+            </svg>
+            <span class="sidebar-label">Dashboard</span>
+        </a>
+        
+        <a href="{{ url_for('recipes.recipes') }}" class="sidebar-item active">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+            </svg>
+            <span class="sidebar-label">Recipes</span>
+        </a>
+        
+        <a href="{{ url_for('calendar.calendar') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <span class="sidebar-label">Meal Planner</span>
+        </a>
+        
+        <a href="{{ url_for('calorie_tracker.calorie_tracker') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            <span class="sidebar-label">Calorie Tracker</span>
+        </a>
+        
+        <a href="{{ url_for('shopping_list.shopping_list') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            </svg>
+            <span class="sidebar-label">Shopping List</span>
+        </a>
+        
+        <a href="{{ url_for('notifications.notifications') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+            </svg>
+            <span class="sidebar-label">Notifications</span>
+        </a>
+        
+        <a href="{{ url_for('profile.profile') }}" class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+            </svg>
+            <span class="sidebar-label">Profile</span>
+        </a>
+        
+        <div class="sidebar-footer">
+            <a href="{{ url_for('auth.logout') }}" class="sidebar-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                </svg>
+                <span class="sidebar-label">Logout</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Header Section -->
+        <div class="mb-6">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold mb-2" style="color: var(--deep-charcoal);">My Recipes</h1>
+                    <p class="text-gray-600">Create, manage, and customize your personal recipe collection</p>
+                </div>
+                <div class="flex gap-3">
+                    <a href="{{ url_for('recipes.recipes') }}" 
+                       class="px-6 py-3 rounded-lg font-medium border-2 hover:bg-gray-50 transition"
+                       style="border-color: var(--sage-green); color: var(--sage-green);">
+                        <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        Discover Recipes
+                    </a>
+                    <button onclick="showCreateRecipeModal()" 
+                            class="px-6 py-3 rounded-lg text-white font-medium hover:opacity-90 transition"
+                            style="background-color: var(--sage-green);">
+                        <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Create New Recipe
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+            <div class="flex flex-wrap gap-3">
+                <button onclick="filterRecipes('all')" class="tab-button active px-6 py-2 rounded-lg font-medium transition" id="tab-all">
+                    All My Recipes
+                </button>
+                <button onclick="filterRecipes('created')" class="tab-button px-6 py-2 rounded-lg font-medium transition border-2" style="border-color: var(--sage-green); color: var(--sage-green);" id="tab-created">
+                    Created by Me
+                </button>
+                <button onclick="filterRecipes('forked')" class="tab-button px-6 py-2 rounded-lg font-medium transition border-2" style="border-color: var(--terracotta); color: var(--terracotta);" id="tab-forked">
+                    Forked Recipes
+                </button>
+                <button onclick="filterRecipes('public')" class="tab-button px-6 py-2 rounded-lg font-medium transition border-2" style="border-color: var(--sage-green); color: var(--sage-green);" id="tab-public">
+                    Public
+                </button>
+                <button onclick="filterRecipes('private')" class="tab-button px-6 py-2 rounded-lg font-medium transition border-2" style="border-color: var(--sage-green); color: var(--sage-green);" id="tab-private">
+                    Private
+                </button>
+                <div class="flex-1"></div>
+                <input type="text" 
+                       id="searchRecipes"
+                       placeholder="Search my recipes..."
+                       oninput="searchRecipes()"
+                       class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                       style="focus:ring-color: var(--sage-green);">
+            </div>
+        </div>
+
+        <!-- Recipes Grid -->
+        <div id="recipesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for recipe in recipes %}
+            <div class="recipe-card bg-white rounded-lg shadow-lg overflow-hidden" 
+                 data-recipe-id="{{ recipe.id }}" 
+                 data-visibility="{{ 'public' if recipe.is_public else 'private' }}" 
+                 data-type="{{ 'forked' if recipe.forked_from_id else 'created' }}"
+                 data-image-url="{{ recipe.image_url or '' }}"
+                 data-forked-from="{{ recipe.forked_from_id or '' }}">
+                {% if recipe.image_url %}
+                <div class="h-48 overflow-hidden">
+                    <img src="{{ recipe.image_url }}" alt="{{ recipe.title }}" class="w-full h-full object-cover">
+                </div>
+                {% else %}
+                <div class="h-48 flex items-center justify-center" style="background: linear-gradient(135deg, var(--sage-green), var(--terracotta));">
+                    <svg class="w-20 h-20 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    </svg>
+                </div>
+                {% endif %}
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-xl font-bold" style="color: var(--deep-charcoal);">{{ recipe.title }}</h3>
+                        {% if recipe.is_public %}
+                        <span class="px-2 py-1 text-xs font-semibold rounded" style="background-color: rgba(74, 124, 89, 0.1); color: var(--sage-green);">PUBLIC</span>
+                        {% else %}
+                        <span class="px-2 py-1 text-xs font-semibold rounded" style="background-color: rgba(224, 122, 95, 0.1); color: var(--terracotta);">PRIVATE</span>
+                        {% endif %}
+                    </div>
+                    <p class="text-gray-600 text-sm mb-3">{{ recipe.description }}</p>
+                    
+                    {% if recipe.forked_from_id %}
+                    <div class="mb-3 flex items-center gap-2 text-sm">
+                        <svg class="w-4 h-4" style="color: var(--terracotta);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                        </svg>
+                        <span style="color: var(--terracotta);">Inspired by</span>
+                        {% if recipe.original_is_public %}
+                        <a href="{{ url_for('recipes.recipes') }}?view={{ recipe.forked_from_id }}" 
+                           class="font-medium hover:underline" style="color: var(--sage-green);">
+                            {{ recipe.original_title or 'Original Recipe' }}
+                        </a>
+                        <span class="text-gray-400">by</span>
+                        <span class="font-medium" style="color: var(--deep-charcoal);">{{ recipe.original_author_name or recipe.original_author_username or 'Unknown' }}</span>
+                        {% else %}
+                        <span class="text-gray-500 italic">{{ recipe.original_author_name or recipe.original_author_username or 'Unknown' }}'s recipe (now private)</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="flex items-center gap-4 mb-4 text-sm text-gray-600">
+                        <div class="flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            {{ (recipe.prep_time or 0) + (recipe.cook_time or 0) }} min
+                        </div>
+                        <div class="flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                            {{ recipe.servings or 0 }} servings
+                        </div>
+                        <div class="flex items-center font-semibold" style="color: var(--terracotta);">
+                            {{ recipe.calories or 0 }} cal
+                        </div>
+                    </div>
+
+                    {% if recipe.avg_rating and recipe.rating_count > 0 %}
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="flex items-center">
+                            {% for i in range(5) %}
+                                {% if i < recipe.avg_rating|round(0, 'floor')|int %}
+                                <svg class="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                                    <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                                </svg>
+                                {% else %}
+                                <svg class="w-4 h-4 text-gray-300 fill-current" viewBox="0 0 20 20">
+                                    <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                                </svg>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <span class="text-sm text-gray-600">{{ "%.1f"|format(recipe.avg_rating|float) }} ({{ recipe.rating_count }} ratings)</span>
+                    </div>
+                    {% endif %}
+
+                    <div class="flex gap-2">
+                        <button onclick="viewRecipe({{ recipe.id }})" class="flex-1 px-4 py-2 rounded-lg text-white font-medium hover:opacity-90 transition" style="background-color: var(--sage-green);">
+                            View
+                        </button>
+                        <button onclick="editRecipe({{ recipe.id }})" class="px-4 py-2 rounded-lg border-2 hover:bg-gray-50 transition" style="border-color: var(--sage-green); color: var(--sage-green);">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                            </svg>
+                        </button>
+                        <button onclick="deleteRecipe({{ recipe.id }})" class="px-4 py-2 rounded-lg border-2 border-red-500 text-red-500 hover:bg-red-50 transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-span-full text-center py-12">
+                <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                </svg>
+                <p class="text-gray-600 text-lg mb-4">No recipes yet</p>
+                <button onclick="showCreateRecipeModal()" 
+                        class="px-6 py-3 rounded-lg text-white font-medium hover:opacity-90 transition"
+                        style="background-color: var(--sage-green);">
+                    Create Your First Recipe
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Reviews Section -->
+        <div class="mt-10">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold" style="color: var(--deep-charcoal);">
+                    <svg class="w-6 h-6 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                    </svg>
+                    Reviews on My Recipes
+                </h2>
+                <span id="reviewsCount" class="text-gray-500 text-sm"></span>
+            </div>
+            
+            <div id="reviewsContainer" class="space-y-4">
+                <div class="text-center py-8 text-gray-500">
+                    <svg class="w-12 h-12 mx-auto mb-3 animate-spin text-gray-400" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Loading reviews...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create/Edit Recipe Modal -->
+    <div id="recipeModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
+                <h2 class="text-2xl font-bold" style="color: var(--deep-charcoal);" id="modalTitle">Create New Recipe</h2>
+                <button onclick="closeRecipeModal()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <form onsubmit="saveRecipe(event)" class="p-6 space-y-6" enctype="multipart/form-data">
+                <!-- Recipe Image Upload -->
+                <div>
+                    <label class="block text-sm font-medium mb-2" style="color: var(--deep-charcoal);">
+                        Recipe Image
+                    </label>
+                    <div id="imageUploadContainer" class="image-upload-container" onclick="document.getElementById('recipeImage').click()">
+                        <input type="file" 
+                               id="recipeImage" 
+                               name="recipe_image" 
+                               accept="image/*" 
+                               class="hidden"
+                               onchange="handleImageUpload(this)">
+                        <div id="imageUploadPlaceholder">
+                            <svg class="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            <p class="text-gray-600 font-medium">Click to upload recipe image</p>
+                            <p class="text-gray-400 text-sm mt-1">PNG, JPG, GIF up to 5MB</p>
+                        </div>
+                        <img id="imagePreview" class="image-preview hidden" alt="Recipe preview">
+                        <div class="image-upload-overlay">
+                            <span class="text-white font-medium">Click to change image</span>
+                        </div>
+                        <button type="button" id="removeImageBtn" class="remove-image-btn hidden" onclick="removeImage(event)">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <input type="hidden" id="existingImageUrl" name="existing_image_url" value="">
+                </div>
+
+                <!-- Basic Info -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium mb-2" style="color: var(--deep-charcoal);">
+                            Recipe Title <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" 
+                               id="recipeTitle" 
+                               name="title"
+                               required
+                               placeholder="e.g., Creamy Mushroom Pasta"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                               style="focus:ring-color: var(--sage-green);">
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium mb-2" style="color: var(--deep-charcoal);">
+                            Description <span class="text-red-500">*</span>
+                        </label>
+                        <textarea id="recipeDescription" 
+                                  name="description"
+                                  required
+                                  rows="3"
+                                  placeholder="Brief description of your recipe..."
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 resize-none"
+                                  style="focus:ring-color: var(--sage-green);"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color: var(--deep-charcoal);">
+                            Cooking Time (minutes) <span class="text-red-500">*</span>
+                        </label>
+                        <input type="number" 
+                               id="cookingTime" 
+                               name="cook_time"
+                               required
+                               min="1"
+                               placeholder="30"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                               style="focus:ring-color: var(--sage-green);">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color: var(--deep-charcoal);">
+                            Servings <span class="text-red-500">*</span>
+                        </label>
+                        <input type="number" 
+                               id="servings" 
+                               name="servings"
+                               required
+                               min="1"
+                               placeholder="4"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                               style="focus:ring-color: var(--sage-green);">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color: var(--deep-charcoal);">
+                            Visibility <span class="text-red-500">*</span>
+                        </label>
+                        <select id="visibility" 
+                                name="is_public"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                                style="focus:ring-color: var(--sage-green);">
+                            <option value="true">Public - Anyone can see</option>
+                            <option value="false">Private - Only you can see</option>
+                        </select>
+                    </div>
+
+                    <!-- Category (Meal Type) -->
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color: var(--deep-charcoal);">
+                            Category
+                        </label>
+                        <select id="category" 
+                                name="category"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                                style="focus:ring-color: var(--sage-green);">
+                            <option value="">Select category...</option>
+                            <option value="breakfast">🍳 Breakfast</option>
+                            <option value="lunch">🥗 Lunch</option>
+                            <option value="dinner">🍽️ Dinner</option>
+                            <option value="dessert">🍰 Dessert</option>
+                            <option value="snack">🍿 Snack</option>
+                            <option value="appetizer">🥟 Appetizer</option>
+                            <option value="beverage">🥤 Beverage</option>
+                        </select>
+                    </div>
+
+                    <!-- Cuisine -->
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color: var(--deep-charcoal);">
+                            Cuisine
+                        </label>
+                        <select id="cuisine" 
+                                name="cuisine"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                                style="focus:ring-color: var(--sage-green);">
+                            <option value="">Select cuisine...</option>
+                            <option value="american">🇺🇸 American</option>
+                            <option value="italian">🇮🇹 Italian</option>
+                            <option value="mexican">🇲🇽 Mexican</option>
+                            <option value="chinese">🇨🇳 Chinese</option>
+                            <option value="indian">🇮🇳 Indian</option>
+                            <option value="japanese">🇯🇵 Japanese</option>
+                            <option value="thai">🇹🇭 Thai</option>
+                            <option value="mediterranean">🌊 Mediterranean</option>
+                            <option value="french">🇫🇷 French</option>
+                            <option value="korean">🇰🇷 Korean</option>
+                        </select>
+                    </div>
+
+                    <!-- Difficulty -->
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color: var(--deep-charcoal);">
+                            Difficulty
+                        </label>
+                        <select id="difficulty" 
+                                name="difficulty"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                                style="focus:ring-color: var(--sage-green);">
+                            <option value="">Select difficulty...</option>
+                            <option value="easy">⭐ Easy</option>
+                            <option value="medium">⭐⭐ Medium</option>
+                            <option value="hard">⭐⭐⭐ Hard</option>
+                        </select>
+                    </div>
+
+                    <!-- Tags -->
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium mb-2" style="color: var(--deep-charcoal);">
+                            Tags
+                        </label>
+                        <input type="text" 
+                               id="tags" 
+                               name="tags"
+                               placeholder="e.g., quick, healthy, vegetarian, spicy (separate with commas)"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                               style="focus:ring-color: var(--sage-green);">
+                        <p class="text-xs text-gray-500 mt-1">Separate multiple tags with commas. Tags help others find your recipe.</p>
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium mb-2" style="color: var(--deep-charcoal);">
+                            Estimated Calories per Serving
+                        </label>
+                        <div class="flex items-center gap-3">
+                            <div class="flex-1 px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg">
+                                <span id="calorieDisplay" class="text-2xl font-bold" style="color: var(--terracotta);">Calculating...</span>
+                                <span class="text-sm text-gray-500 ml-2">cal/serving</span>
+                            </div>
+                            <button type="button" 
+                                    onclick="calculateCalories()"
+                                    class="px-6 py-3 rounded-lg text-white font-medium hover:opacity-90 transition"
+                                    style="background-color: var(--sage-green);">
+                                <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                </svg>
+                                Recalculate
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">Calories are automatically calculated from ingredients using USDA FoodData API</p>
+                    </div>
+                </div>
+
+                <!-- Hidden fields for additional backend requirements -->
+                <input type="hidden" name="prep_time" value="0">
+                <input type="hidden" id="calories_per_serving" name="calories_per_serving" value="0">
+
+                <!-- Ingredients -->
+                <div>
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium" style="color: var(--deep-charcoal);">
+                            Ingredients <span class="text-red-500">*</span>
+                        </label>
+                    </div>
+                    <div id="ingredientsList" class="space-y-2">
+                        <div class="ingredient-item flex gap-2">
+                            <input type="text" 
+                                   placeholder="e.g., 2 cups flour"
+                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                                   style="focus:ring-color: var(--sage-green);">
+                            <button type="button" 
+                                    onclick="removeIngredient(this)"
+                                    class="px-3 py-2 text-red-500 hover:bg-red-50 rounded-lg transition">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="button" 
+                            onclick="addIngredient()"
+                            class="mt-3 px-4 py-2 rounded-lg text-sm text-white font-medium hover:opacity-90 transition w-full"
+                            style="background-color: var(--sage-green);">
+                        + Add Ingredient
+                    </button>
+                </div>
+
+                <!-- Preparation Steps -->
+                <div>
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium" style="color: var(--deep-charcoal);">
+                            Preparation Steps <span class="text-red-500">*</span>
+                        </label>
+                    </div>
+                    <div id="stepsList" class="space-y-3">
+                        <div class="step-item flex gap-2">
+                            <span class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-sm" style="background-color: var(--sage-green);">1</span>
+                            <textarea placeholder="Describe this step..."
+                                      rows="2"
+                                      class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 resize-none"
+                                      style="focus:ring-color: var(--sage-green);"></textarea>
+                            <button type="button" 
+                                    onclick="removeStep(this)"
+                                    class="px-3 py-2 text-red-500 hover:bg-red-50 rounded-lg transition h-fit">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="button" 
+                            onclick="addStep()"
+                            class="mt-3 px-4 py-2 rounded-lg text-sm text-white font-medium hover:opacity-90 transition w-full"
+                            style="background-color: var(--sage-green);">
+                        + Add Step
+                    </button>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex gap-3 pt-4 border-t border-gray-200">
+                    <button type="submit" 
+                            class="flex-1 px-6 py-3 rounded-lg text-white font-medium hover:opacity-90 transition"
+                            style="background-color: var(--sage-green);">
+                        Save Recipe
+                    </button>
+                    <button type="button" 
+                            onclick="closeRecipeModal()"
+                            class="flex-1 px-6 py-3 rounded-lg font-medium border-2 hover:bg-gray-50 transition"
+                            style="color: var(--deep-charcoal); border-color: var(--deep-charcoal);">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- View Recipe Modal -->
+    <div id="viewRecipeModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <!-- Recipe Image Banner -->
+            <div id="viewImageContainer" class="hidden">
+                <img id="viewRecipeImage" src="" alt="Recipe Image" class="w-full h-64 object-cover">
+            </div>
+            <div class="sticky top-0 bg-white border-b border-gray-200 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex-1">
+                        <h2 class="text-3xl font-bold mb-2" style="color: var(--deep-charcoal);" id="viewTitle">Recipe Title</h2>
+                        <div class="flex items-center gap-3">
+                            <span id="viewVisibilityBadge" class="px-3 py-1 text-xs font-semibold rounded"></span>
+                            <div class="flex items-center gap-4 text-sm text-gray-600">
+                                <span id="viewTime"></span>
+                                <span id="viewServings"></span>
+                                <span id="viewCalories" class="font-semibold" style="color: var(--terracotta);"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="closeViewRecipeModal()" class="text-gray-500 hover:text-gray-700">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <p id="viewDescription" class="text-gray-600"></p>
+                <div id="viewInspiredBy" class="hidden mt-3 flex items-center gap-2 text-sm">
+                    <svg class="w-4 h-4" style="color: var(--terracotta);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                    </svg>
+                    <span style="color: var(--terracotta);">Inspired by</span>
+                    <a id="viewOriginalLink" href="#" class="font-medium hover:underline" style="color: var(--sage-green);"></a>
+                    <span class="text-gray-400">by</span>
+                    <span id="viewOriginalAuthor" class="font-medium" style="color: var(--deep-charcoal);"></span>
+                </div>
+            </div>
+
+            <div class="p-6 space-y-6">
+                <!-- Ingredients Section -->
+                <div>
+                    <h3 class="text-xl font-bold mb-3" style="color: var(--deep-charcoal);">Ingredients</h3>
+                    <ul id="viewIngredients" class="space-y-2"></ul>
+                </div>
+
+                <!-- Steps Section -->
+                <div>
+                    <h3 class="text-xl font-bold mb-3" style="color: var(--deep-charcoal);">Preparation Steps</h3>
+                    <div id="viewSteps" class="space-y-4"></div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
+                    <a id="cookNowBtn" href="#" 
+                       class="px-6 py-3 rounded-lg text-white font-medium hover:opacity-90 transition flex items-center gap-2"
+                       style="background-color: var(--sage-green);">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path>
+                        </svg>
+                        Cook Now
+                    </a>
+                    <button onclick="editRecipeFromView()" 
+                            class="px-6 py-3 rounded-lg font-medium border-2 hover:bg-gray-50 transition"
+                            style="border-color: var(--sage-green); color: var(--sage-green);">
+                        <svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                        Edit
+                    </button>
+                    <button onclick="closeViewRecipeModal()" 
+                            class="px-6 py-3 rounded-lg font-medium border-2 hover:bg-gray-50 transition"
+                            style="color: var(--deep-charcoal); border-color: var(--deep-charcoal);">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentRecipeId = null;
+        let currentFilter = 'all';
+        let currentImageFile = null;
+
+        // Load reviews on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadMyRecipeReviews();
+        });
+
+        async function loadMyRecipeReviews() {
+            const container = document.getElementById('reviewsContainer');
+            
+            try {
+                const response = await fetch('/api/my-recipes/reviews', {
+                    credentials: 'same-origin'
+                });
+                const data = await response.json();
+                
+                if (data.success && data.reviews) {
+                    document.getElementById('reviewsCount').textContent = `${data.reviews.length} review${data.reviews.length !== 1 ? 's' : ''}`;
+                    
+                    if (data.reviews.length === 0) {
+                        container.innerHTML = `
+                            <div class="bg-white rounded-lg shadow-md p-8 text-center">
+                                <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                </svg>
+                                <p class="text-gray-500 text-lg">No reviews yet</p>
+                                <p class="text-gray-400 text-sm mt-2">When someone reviews your recipes, they'll appear here</p>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    container.innerHTML = data.reviews.map(review => renderReviewCard(review)).join('');
+                } else {
+                    container.innerHTML = `<p class="text-red-500">Failed to load reviews</p>`;
+                }
+            } catch (error) {
+                console.error('Error loading reviews:', error);
+                container.innerHTML = `<p class="text-red-500">Error loading reviews. Please try again.</p>`;
+            }
+        }
+
+        function renderReviewCard(review) {
+            const reviewerName = review.reviewer_name || review.reviewer_username || 'Anonymous';
+            const reviewerInitial = reviewerName.charAt(0).toUpperCase();
+            const date = new Date(review.created_at).toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric' 
+            });
+            
+            // Generate stars
+            let starsHtml = '';
+            for (let i = 1; i <= 5; i++) {
+                if (i <= review.rating) {
+                    starsHtml += `<svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                    </svg>`;
+                } else {
+                    starsHtml += `<svg class="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                    </svg>`;
+                }
+            }
+            
+            return `
+                <div class="bg-white rounded-lg shadow-md p-5 hover:shadow-lg transition">
+                    <div class="flex gap-4">
+                        <!-- Recipe Image/Icon -->
+                        <div class="flex-shrink-0">
+                            ${review.recipe_image 
+                                ? `<img src="${review.recipe_image}" alt="${escapeHtml(review.recipe_title)}" class="w-20 h-20 rounded-lg object-cover">`
+                                : `<div class="w-20 h-20 rounded-lg flex items-center justify-center" style="background: linear-gradient(135deg, var(--sage-green), var(--terracotta));">
+                                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                                    </svg>
+                                </div>`
+                            }
+                        </div>
+                        
+                        <!-- Review Content -->
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-start justify-between gap-4 mb-2">
+                                <div>
+                                    <h3 class="font-semibold text-lg" style="color: var(--deep-charcoal);">
+                                        <a href="{{ url_for('recipes.recipes') }}?view=${review.recipe_id}" class="hover:underline" style="color: var(--sage-green);">
+                                            ${escapeHtml(review.recipe_title)}
+                                        </a>
+                                    </h3>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        ${review.reviewer_image 
+                                            ? `<img src="${review.reviewer_image}" alt="${escapeHtml(reviewerName)}" class="w-6 h-6 rounded-full object-cover">`
+                                            : `<div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white" style="background: linear-gradient(135deg, var(--sage-green), var(--terracotta));">${reviewerInitial}</div>`
+                                        }
+                                        <span class="text-sm text-gray-600">${escapeHtml(reviewerName)}</span>
+                                        <span class="text-gray-300">•</span>
+                                        <span class="text-sm text-gray-500">${date}</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-1 flex-shrink-0">
+                                    ${starsHtml}
+                                </div>
+                            </div>
+                            
+                            ${review.review 
+                                ? `<p class="text-gray-700 mt-3">"${escapeHtml(review.review)}"</p>`
+                                : `<p class="text-gray-400 italic mt-3">No written review</p>`
+                            }
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Image upload handling functions
+        function handleImageUpload(input) {
+            const file = input.files[0];
+            if (file) {
+                // Validate file size (5MB limit)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('Image size must be less than 5MB');
+                    input.value = '';
+                    return;
+                }
+                
+                // Validate file type
+                if (!file.type.startsWith('image/')) {
+                    alert('Please select a valid image file');
+                    input.value = '';
+                    return;
+                }
+                
+                currentImageFile = file;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const container = document.getElementById('imageUploadContainer');
+                    const preview = document.getElementById('imagePreview');
+                    const placeholder = document.getElementById('imageUploadPlaceholder');
+                    const removeBtn = document.getElementById('removeImageBtn');
+                    
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                    removeBtn.classList.remove('hidden');
+                    container.classList.add('has-image');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function removeImage(event) {
+            event.stopPropagation();
+            const container = document.getElementById('imageUploadContainer');
+            const preview = document.getElementById('imagePreview');
+            const placeholder = document.getElementById('imageUploadPlaceholder');
+            const removeBtn = document.getElementById('removeImageBtn');
+            const input = document.getElementById('recipeImage');
+            
+            preview.src = '';
+            preview.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+            removeBtn.classList.add('hidden');
+            container.classList.remove('has-image');
+            input.value = '';
+            currentImageFile = null;
+            document.getElementById('existingImageUrl').value = '';
+        }
+
+        function setExistingImage(imageUrl) {
+            if (imageUrl) {
+                const container = document.getElementById('imageUploadContainer');
+                const preview = document.getElementById('imagePreview');
+                const placeholder = document.getElementById('imageUploadPlaceholder');
+                const removeBtn = document.getElementById('removeImageBtn');
+                
+                preview.src = imageUrl;
+                preview.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                removeBtn.classList.remove('hidden');
+                container.classList.add('has-image');
+                document.getElementById('existingImageUrl').value = imageUrl;
+            }
+        }
+
+        function filterRecipes(filter) {
+            currentFilter = filter;
+            const cards = document.querySelectorAll('.recipe-card');
+            
+            // Update tab buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+                btn.style.backgroundColor = '';
+                btn.style.color = '';
+            });
+            
+            const activeTab = document.getElementById(`tab-${filter}`);
+            activeTab.classList.add('active');
+            
+            // Filter cards
+            cards.forEach(card => {
+                const visibility = card.getAttribute('data-visibility');
+                const type = card.getAttribute('data-type');
+                let show = false;
+                
+                if (filter === 'all') {
+                    show = true;
+                } else if (filter === 'created' && type === 'created') {
+                    show = true;
+                } else if (filter === 'forked' && type === 'forked') {
+                    show = true;
+                } else if (filter === 'public' && visibility === 'public') {
+                    show = true;
+                } else if (filter === 'private' && visibility === 'private') {
+                    show = true;
+                }
+                
+                card.style.display = show ? 'block' : 'none';
+            });
+        }
+
+        function searchRecipes() {
+            const searchTerm = document.getElementById('searchRecipes').value.toLowerCase();
+            const cards = document.querySelectorAll('.recipe-card');
+            
+            cards.forEach(card => {
+                const title = card.querySelector('h3').textContent.toLowerCase();
+                const description = card.querySelector('p').textContent.toLowerCase();
+                const visibility = card.getAttribute('data-visibility');
+                
+                const matchesSearch = title.includes(searchTerm) || description.includes(searchTerm);
+                const matchesFilter = currentFilter === 'all' || visibility === currentFilter;
+                
+                if (matchesSearch && matchesFilter) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function showCreateRecipeModal() {
+            currentRecipeId = null;
+            document.getElementById('modalTitle').textContent = 'Create New Recipe';
+            document.getElementById('recipeModal').classList.remove('hidden');
+            resetForm();
+        }
+
+        function closeRecipeModal() {
+            document.getElementById('recipeModal').classList.add('hidden');
+            resetForm();
+        }
+
+        function resetForm() {
+            document.getElementById('recipeTitle').value = '';
+            document.getElementById('recipeDescription').value = '';
+            document.getElementById('cookingTime').value = '';
+            document.getElementById('servings').value = '';
+            document.getElementById('visibility').value = 'true';
+            document.getElementById('category').value = '';
+            document.getElementById('cuisine').value = '';
+            document.getElementById('difficulty').value = '';
+            document.getElementById('tags').value = '';
+            document.getElementById('calorieDisplay').textContent = '0';
+            document.getElementById('calories_per_serving').value = '0';
+            
+            // Reset image upload
+            const container = document.getElementById('imageUploadContainer');
+            const preview = document.getElementById('imagePreview');
+            const placeholder = document.getElementById('imageUploadPlaceholder');
+            const removeBtn = document.getElementById('removeImageBtn');
+            const input = document.getElementById('recipeImage');
+            
+            preview.src = '';
+            preview.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+            removeBtn.classList.add('hidden');
+            container.classList.remove('has-image');
+            input.value = '';
+            currentImageFile = null;
+            document.getElementById('existingImageUrl').value = '';
+            
+            // Reset ingredients
+            const ingredientsList = document.getElementById('ingredientsList');
+            ingredientsList.innerHTML = `
+                <div class="ingredient-item flex gap-2">
+                    <input type="text" 
+                           placeholder="e.g., 2 cups flour"
+                           class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                           style="focus:ring-color: var(--sage-green);">
+                    <button type="button" 
+                            onclick="removeIngredient(this)"
+                            class="px-3 py-2 text-red-500 hover:bg-red-50 rounded-lg transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            `;
+            
+            // Reset steps
+            const stepsList = document.getElementById('stepsList');
+            stepsList.innerHTML = `
+                <div class="step-item flex gap-2">
+                    <span class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-sm" style="background-color: var(--sage-green);">1</span>
+                    <textarea placeholder="Describe this step..."
+                              rows="2"
+                              class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 resize-none"
+                              style="focus:ring-color: var(--sage-green);"></textarea>
+                    <button type="button" 
+                            onclick="removeStep(this)"
+                            class="px-3 py-2 text-red-500 hover:bg-red-50 rounded-lg transition h-fit">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            `;
+        }
+
+        function addIngredient() {
+            const ingredientsList = document.getElementById('ingredientsList');
+            const newIngredient = document.createElement('div');
+            newIngredient.className = 'ingredient-item flex gap-2';
+            newIngredient.innerHTML = `
+                <input type="text" 
+                       placeholder="e.g., 2 cups flour"
+                       onchange="debouncedCalculateCalories()"
+                       class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                       style="focus:ring-color: var(--sage-green);">
+                <button type="button" 
+                        onclick="removeIngredient(this)"
+                        class="px-3 py-2 text-red-500 hover:bg-red-50 rounded-lg transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            `;
+            ingredientsList.appendChild(newIngredient);
+        }
+
+        function removeIngredient(button) {
+            const ingredientsList = document.getElementById('ingredientsList');
+            if (ingredientsList.children.length > 1) {
+                button.parentElement.remove();
+                debouncedCalculateCalories();
+            } else {
+                alert('You must have at least one ingredient!');
+            }
+        }
+        
+        // Debounce function to avoid too many API calls
+        let calorieCalcTimeout;
+        function debouncedCalculateCalories() {
+            clearTimeout(calorieCalcTimeout);
+            calorieCalcTimeout = setTimeout(calculateCalories, 1000);
+        }
+
+        function addStep() {
+            const stepsList = document.getElementById('stepsList');
+            const stepNumber = stepsList.children.length + 1;
+            const newStep = document.createElement('div');
+            newStep.className = 'step-item flex gap-2';
+            newStep.innerHTML = `
+                <span class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-sm" style="background-color: var(--sage-green);">${stepNumber}</span>
+                <textarea placeholder="Describe this step..."
+                          rows="2"
+                          class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 resize-none"
+                          style="focus:ring-color: var(--sage-green);"></textarea>
+                <button type="button" 
+                        onclick="removeStep(this)"
+                        class="px-3 py-2 text-red-500 hover:bg-red-50 rounded-lg transition h-fit">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            `;
+            stepsList.appendChild(newStep);
+        }
+
+        function removeStep(button) {
+            const stepsList = document.getElementById('stepsList');
+            if (stepsList.children.length > 1) {
+                button.parentElement.remove();
+                // Renumber steps
+                Array.from(stepsList.children).forEach((step, index) => {
+                    step.querySelector('span').textContent = index + 1;
+                });
+            } else {
+                alert('You must have at least one step!');
+            }
+        }
+
+        function saveRecipe(event) {
+            event.preventDefault();
+            
+            // Calculate calories before saving
+            calculateCalories().then(() => {
+                const form = event.target;
+                const formData = new FormData(form);
+                
+                // Collect ingredients
+                const ingredients = [];
+                document.querySelectorAll('#ingredientsList input').forEach(input => {
+                    if (input.value.trim()) ingredients.push(input.value.trim());
+                });
+                formData.set('ingredients', ingredients.join('\n'));
+                
+                // Collect steps
+                const steps = [];
+                document.querySelectorAll('#stepsList textarea').forEach(textarea => {
+                    if (textarea.value.trim()) steps.push(textarea.value.trim());
+                });
+                formData.set('instructions', steps.join('\n'));
+                
+                const title = formData.get('title');
+                const url = currentRecipeId ? `/api/recipes/${currentRecipeId}` : '/api/recipes';
+                const method = 'POST';
+                
+                fetch(url, {
+                    method: method,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        closeRecipeModal();
+                        window.location.reload();
+                    } else {
+                        alert(data.message || 'Operation failed. Please try again.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred. Please try again.');
+                });
+            });
+        }
+
+        // Calorie calculation using USDA FoodData API
+        const USDA_API_KEY = 'BhoEapgT3V4pgciWtULDMCKfL70TcBgAbvMxVsoz';
+        
+        async function calculateCalories() {
+            const ingredients = [];
+            document.querySelectorAll('#ingredientsList input').forEach(input => {
+                if (input.value.trim()) ingredients.push(input.value.trim());
+            });
+            
+            const servings = parseInt(document.getElementById('servings').value) || 1;
+            
+            if (ingredients.length === 0) {
+                document.getElementById('calorieDisplay').textContent = '0';
+                document.getElementById('calories_per_serving').value = '0';
+                return;
+            }
+            
+            document.getElementById('calorieDisplay').textContent = 'Calculating...';
+            
+            try {
+                // Use backend parser for consistent ingredient parsing
+                const parseResponse = await fetch('/api/parse-ingredients', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ingredients })
+                });
+                
+                const parseData = await parseResponse.json();
+                
+                if (!parseData.success || !parseData.parsed) {
+                    throw new Error('Failed to parse ingredients');
+                }
+                
+                let totalCalories = 0;
+                let successCount = 0;
+                
+                for (const parsed of parseData.parsed) {
+                    try {
+                        const calories = await getIngredientCaloriesFromUSDA(parsed.foodName, parsed.gramsEstimate);
+                        if (calories > 0) {
+                            totalCalories += calories;
+                            successCount++;
+                        }
+                    } catch (error) {
+                        console.error(`Error fetching calories for ${parsed.name}:`, error);
+                    }
+                }
+                
+                const caloriesPerServing = Math.round(totalCalories / servings);
+                document.getElementById('calorieDisplay').textContent = caloriesPerServing;
+                document.getElementById('calories_per_serving').value = caloriesPerServing;
+                
+                if (successCount < ingredients.length) {
+                    console.log(`Successfully calculated ${successCount} out of ${ingredients.length} ingredients`);
+                }
+            } catch (error) {
+                console.error('Calorie calculation error:', error);
+                document.getElementById('calorieDisplay').textContent = 'Error';
+            }
+        }
+        
+        async function getIngredientCaloriesFromUSDA(foodName, gramsEstimate) {
+            console.log(`[getIngredientCalories] foodName="${foodName}", gramsEstimate=${gramsEstimate}`);
+            
+            try {
+                // Search for food in USDA database using POST request
+                const searchUrl = `https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${USDA_API_KEY}`;
+                const searchResponse = await fetch(searchUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: foodName,
+                        pageSize: 5,
+                        dataType: ["Foundation", "SR Legacy", "Survey (FNDDS)"]
+                    })
+                });
+                
+                if (!searchResponse.ok) {
+                    throw new Error(`API responded with status ${searchResponse.status}`);
+                }
+                
+                const searchData = await searchResponse.json();
+                
+                if (searchData.foods && searchData.foods.length > 0) {
+                    // Find the best match (prefer foods with calorie data)
+                    for (const food of searchData.foods) {
+                        // Look for Energy nutrient (nutrientId 1008 is Energy in kcal)
+                        const energyNutrient = food.foodNutrients?.find(n => 
+                            n.nutrientId === 1008 || 
+                            n.nutrientNumber === '208' ||
+                            (n.nutrientName && n.nutrientName.toLowerCase().includes('energy'))
+                        );
+                        
+                        if (energyNutrient && energyNutrient.value) {
+                            // Calories are per 100g, adjust based on estimated grams
+                            const caloriesPer100g = energyNutrient.value;
+                            const totalCalories = Math.round((caloriesPer100g * gramsEstimate) / 100);
+                            console.log(`[USDA API] "${foodName}": ${caloriesPer100g} cal/100g × ${gramsEstimate}g / 100 = ${totalCalories} cal`);
+                            return totalCalories;
+                        }
+                    }
+                }
+                
+                console.log(`[USDA API] No energy data found for "${foodName}", using fallback`);
+            } catch (error) {
+                console.error('[USDA API Error]:', error);
+            }
+            
+            // Fallback: estimate based on common foods
+            const fallbackCalories = estimateCalories(foodName, gramsEstimate);
+            console.log(`[Fallback] "${foodName}": ${fallbackCalories} cal for ${gramsEstimate}g`);
+            return fallbackCalories;
+        }
+        
+        // Legacy function for backward compatibility - now uses backend parser via API
+        async function getIngredientCalories(ingredientText) {
+            try {
+                const parseResponse = await fetch('/api/parse-ingredients', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ingredients: [ingredientText] })
+                });
+                
+                const parseData = await parseResponse.json();
+                
+                if (parseData.success && parseData.parsed && parseData.parsed.length > 0) {
+                    const parsed = parseData.parsed[0];
+                    return await getIngredientCaloriesFromUSDA(parsed.foodName, parsed.gramsEstimate);
+                }
+            } catch (error) {
+                console.error('Parse error:', error);
+            }
+            
+            return 0;
+        }
+        
+        // Simple local parser as fallback (in case API is unavailable)
+        function parseIngredientLocal(ingredientText) {
+            const original = ingredientText.toLowerCase().trim();
+            
+            // Common unit conversions to grams (approximate)
+            const unitToGrams = {
+                'cup': 240, 'cups': 240,
+                'tablespoon': 15, 'tablespoons': 15, 'tbsp': 15,
+                'teaspoon': 5, 'teaspoons': 5, 'tsp': 5,
+                'oz': 28, 'ounce': 28, 'ounces': 28,
+                'pound': 454, 'pounds': 454, 'lb': 454, 'lbs': 454,
+                'gram': 1, 'grams': 1, 'g': 1,
+                'kg': 1000, 'kilogram': 1000,
+                'ml': 1, 'milliliter': 1, 'milliliters': 1,
+                'liter': 1000, 'liters': 1000, 'l': 1000,
+                'clove': 5, 'cloves': 5,
+                'slice': 30, 'slices': 30,
+                'piece': 50, 'pieces': 50,
+                'whole': 100, 'medium': 100, 'large': 150, 'small': 50
+            };
+            
+            let quantity = 1;
+            let unit = '';
+            let gramsEstimate = 100; // Default
+            
+            // First, try to match patterns with units attached directly to numbers (like "100g", "50g")
+            const directGramMatch = original.match(/^(\d+\.?\d*)\s*(g|gram|grams)\b/i);
+            if (directGramMatch) {
+                quantity = parseFloat(directGramMatch[1]);
+                unit = 'g';
+                gramsEstimate = quantity; // grams directly
+                console.log(`[parseIngredient] Direct gram match: ${original} -> ${quantity}g`);
+            } else {
+                // Match patterns like "2 cups", "1/2 cup", "1.5 tbsp", "100g", "2-3 pieces"
+                const patterns = [
+                    // Range with unit: "2-3 cups"
+                    { regex: /^(\d+\.?\d*)\s*-\s*(\d+\.?\d*)\s*(cup|cups|tablespoon|tablespoons|tbsp|teaspoon|teaspoons|tsp|oz|ounce|ounces|pound|pounds|lb|lbs|gram|grams|g|kg|ml|l|liter|liters|clove|cloves|slice|slices|piece|pieces|whole|medium|large|small)\b/i, type: 'range' },
+                    // Fraction with unit: "1/2 cup"
+                    { regex: /^(\d+)\s*\/\s*(\d+)\s*(cup|cups|tablespoon|tablespoons|tbsp|teaspoon|teaspoons|tsp|oz|ounce|ounces|pound|pounds|lb|lbs|gram|grams|g|kg|ml|l|liter|liters|clove|cloves|slice|slices|piece|pieces|whole|medium|large|small)\b/i, type: 'fraction' },
+                    // Number with unit: "2 cups", "100g"
+                    { regex: /^(\d+\.?\d*)\s*(cup|cups|tablespoon|tablespoons|tbsp|teaspoon|teaspoons|tsp|oz|ounce|ounces|pound|pounds|lb|lbs|gram|grams|g|kg|ml|l|liter|liters|clove|cloves|slice|slices|piece|pieces|whole|medium|large|small)\b/i, type: 'number_unit' },
+                    // Just a number: "2 chicken breasts"
+                    { regex: /^(\d+\.?\d*)\s+/, type: 'number_only' }
+                ];
+                
+                for (const { regex, type } of patterns) {
+                    const match = original.match(regex);
+                    if (match) {
+                        console.log(`[parseIngredient] Pattern type: ${type}, match:`, match);
+                        
+                        if (type === 'range') {
+                            // Use average of range
+                            quantity = (parseFloat(match[1]) + parseFloat(match[2])) / 2;
+                            unit = match[3].toLowerCase();
+                        } else if (type === 'fraction') {
+                            quantity = parseFloat(match[1]) / parseFloat(match[2]);
+                            unit = match[3].toLowerCase();
+                        } else if (type === 'number_unit') {
+                            quantity = parseFloat(match[1]);
+                            unit = match[2].toLowerCase();
+                        } else if (type === 'number_only') {
+                            quantity = parseFloat(match[1]);
+                        }
+                        break;
+                    }
+                }
+                
+                // Calculate grams estimate based on unit
+                if (unit && unitToGrams[unit]) {
+                    gramsEstimate = quantity * unitToGrams[unit];
+                } else if (quantity > 0 && quantity !== 1) {
+                    // If only a number (no unit), assume 100g per item
+                    gramsEstimate = quantity * 100;
+                }
+            }
+            
+            // Cap at reasonable amounts
+            gramsEstimate = Math.min(gramsEstimate, 2000);
+            gramsEstimate = Math.max(gramsEstimate, 5);
+            
+            // Extract food name (remove quantities and units)
+            let foodName = original
+                .replace(/^\d+\.?\d*\s*-\s*\d+\.?\d*\s*/g, '') // Remove ranges like "2-3"
+                .replace(/^\d+\s*\/\s*\d+\s*/g, '') // Remove fractions
+                .replace(/^\d+\.?\d*\s*/g, '') // Remove numbers
+                .replace(/^(cup|cups|tablespoon|tablespoons|tbsp|teaspoon|teaspoons|tsp|oz|ounce|ounces|pound|pounds|lb|lbs|gram|grams|g|kg|ml|l|liter|liters|clove|cloves|slice|slices|piece|pieces|whole|medium|large|small)\s*(of\s*)?/gi, '')
+                .replace(/,.*$/, '') // Remove everything after comma
+                .replace(/\(.*\)/, '') // Remove parenthetical notes
+                .trim();
+            
+            // Remove common prefixes
+            foodName = foodName.replace(/^(fresh|dried|frozen|canned|chopped|diced|minced|sliced|grated|shredded)\s+/gi, '');
+            
+            console.log(`[parseIngredient] "${ingredientText}" -> foodName: "${foodName}", quantity: ${quantity}, unit: "${unit}", gramsEstimate: ${gramsEstimate}`);
+            
+            return { foodName, gramsEstimate: Math.round(gramsEstimate) };
+        }
+        
+        function estimateCalories(foodName, grams = 100) {
+            // Fallback calorie estimates for common ingredients (per 100g)
+            const estimates = {
+                'chicken': 165, 'beef': 250, 'pork': 242, 'lamb': 294,
+                'rice': 130, 'pasta': 131, 'bread': 265, 'noodle': 138,
+                'egg': 155, 'milk': 42, 'cheese': 402, 'cream': 340,
+                'butter': 717, 'oil': 884, 'olive oil': 884, 'sugar': 387,
+                'flour': 364, 'potato': 77, 'tomato': 18, 'salt': 0,
+                'onion': 40, 'garlic': 149, 'carrot': 41, 'pepper': 20,
+                'broccoli': 34, 'spinach': 23, 'lettuce': 15, 'cabbage': 25,
+                'apple': 52, 'banana': 89, 'orange': 47, 'lemon': 29,
+                'avocado': 160, 'nuts': 607, 'almond': 579, 'walnut': 654,
+                'chocolate': 546, 'honey': 304, 'maple syrup': 260,
+                'salmon': 208, 'tuna': 132, 'shrimp': 99, 'fish': 120,
+                'tofu': 76, 'beans': 127, 'lentils': 116, 'chickpea': 164,
+                'yogurt': 59, 'sour cream': 198, 'mayonnaise': 680,
+                'ketchup': 112, 'mustard': 66, 'soy sauce': 53,
+                'wine': 83, 'beer': 43, 'vinegar': 18,
+                'coconut': 354, 'coconut milk': 230
+            };
+            
+            const lowerName = foodName.toLowerCase();
+            for (const [key, valuePer100g] of Object.entries(estimates)) {
+                if (lowerName.includes(key)) {
+                    return Math.round((valuePer100g * grams) / 100);
+                }
+            }
+            
+            // Default estimate for unknown ingredients (50 cal per 100g)
+            return Math.round((50 * grams) / 100);
+        }
+
+        function viewRecipe(recipeId) {
+            fetch(`/api/recipes/${recipeId}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayRecipeModal(data.recipe);
+                } else {
+                    alert(data.message || 'Failed to load recipe');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            });
+        }
+
+        function displayRecipeModal(recipe) {
+            currentRecipeId = recipe.id;
+            
+            // Set Cook Now button link
+            document.getElementById('cookNowBtn').href = `/cook/${recipe.id}`;
+            
+            // Show recipe image if available
+            const imageContainer = document.getElementById('viewImageContainer');
+            const recipeImage = document.getElementById('viewRecipeImage');
+            if (recipe.image_url) {
+                recipeImage.src = recipe.image_url;
+                imageContainer.classList.remove('hidden');
+            } else {
+                imageContainer.classList.add('hidden');
+                recipeImage.src = '';
+            }
+            
+            document.getElementById('viewTitle').textContent = recipe.title;
+            document.getElementById('viewDescription').textContent = recipe.description;
+            document.getElementById('viewTime').innerHTML = `
+                <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                ${recipe.prep_time + recipe.cook_time} min
+            `;
+            document.getElementById('viewServings').innerHTML = `
+                <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+                ${recipe.servings} servings
+            `;
+            document.getElementById('viewCalories').textContent = `${recipe.calories} cal`;
+            
+            const badge = document.getElementById('viewVisibilityBadge');
+            if (recipe.is_public) {
+                badge.textContent = 'PUBLIC';
+                badge.style.backgroundColor = 'rgba(74, 124, 89, 0.1)';
+                badge.style.color = 'var(--sage-green)';
+            } else {
+                badge.textContent = 'PRIVATE';
+                badge.style.backgroundColor = 'rgba(224, 122, 95, 0.1)';
+                badge.style.color = 'var(--terracotta)';
+            }
+            
+            // Show/hide Inspired By section
+            const inspiredBySection = document.getElementById('viewInspiredBy');
+            if (recipe.forked_from_id) {
+                inspiredBySection.classList.remove('hidden');
+                const originalLink = document.getElementById('viewOriginalLink');
+                const originalAuthor = document.getElementById('viewOriginalAuthor');
+                
+                if (recipe.original_is_public) {
+                    originalLink.href = `{{ url_for('recipes.recipes') }}?view=${recipe.forked_from_id}`;
+                    originalLink.textContent = recipe.original_title || 'Original Recipe';
+                    originalLink.style.pointerEvents = 'auto';
+                } else {
+                    originalLink.href = '#';
+                    originalLink.textContent = recipe.original_title || 'Original Recipe';
+                    originalLink.style.pointerEvents = 'none';
+                    originalLink.style.color = 'var(--deep-charcoal)';
+                }
+                originalAuthor.textContent = recipe.original_author_name || recipe.original_author_username || 'Unknown';
+            } else {
+                inspiredBySection.classList.add('hidden');
+            }
+            
+            // Parse and display ingredients
+            const ingredients = recipe.ingredients.split('\n').filter(i => i.trim());
+            const ingredientsList = document.getElementById('viewIngredients');
+            ingredientsList.innerHTML = ingredients.map(ing => 
+                `<li class="flex items-start">
+                    <svg class="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" style="color: var(--sage-green);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span class="text-gray-700">${ing}</span>
+                </li>`
+            ).join('');
+            
+            // Parse and display steps
+            const steps = recipe.instructions.split('\n').filter(s => s.trim());
+            const stepsList = document.getElementById('viewSteps');
+            stepsList.innerHTML = steps.map((step, index) => 
+                `<div class="flex gap-3">
+                    <span class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-sm" style="background-color: var(--sage-green);">${index + 1}</span>
+                    <p class="text-gray-700 pt-1">${step}</p>
+                </div>`
+            ).join('');
+            
+            document.getElementById('viewRecipeModal').classList.remove('hidden');
+        }
+
+        function closeViewRecipeModal() {
+            document.getElementById('viewRecipeModal').classList.add('hidden');
+            currentRecipeId = null;
+        }
+
+        function editRecipeFromView() {
+            const recipeId = currentRecipeId;  // Save the ID before closing
+            closeViewRecipeModal();
+            editRecipe(recipeId);
+        }
+
+        function editRecipe(recipeId) {
+            fetch(`/api/recipes/${recipeId}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const recipe = data.recipe;
+                    currentRecipeId = recipe.id;
+                    
+                    document.getElementById('modalTitle').textContent = 'Edit Recipe';
+                    document.getElementById('recipeTitle').value = recipe.title;
+                    document.getElementById('recipeDescription').value = recipe.description;
+                    document.getElementById('cookingTime').value = recipe.prep_time + recipe.cook_time;
+                    document.getElementById('servings').value = recipe.servings;
+                    document.getElementById('calorieDisplay').textContent = recipe.calories || '0';
+                    document.getElementById('calories_per_serving').value = recipe.calories || '0';
+                    document.getElementById('visibility').value = recipe.is_public ? 'true' : 'false';
+                    document.getElementById('category').value = recipe.category || '';
+                    document.getElementById('cuisine').value = recipe.cuisine || '';
+                    document.getElementById('difficulty').value = recipe.difficulty || '';
+                    document.getElementById('tags').value = recipe.tags || '';
+                    
+                    // Populate ingredients
+                    const ingredients = recipe.ingredients.split('\n').filter(i => i.trim());
+                    const ingredientsList = document.getElementById('ingredientsList');
+                    ingredientsList.innerHTML = ingredients.map(ing => 
+                        `<div class="ingredient-item flex gap-2">
+                            <input type="text" 
+                                   value="${ing}"
+                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                                   style="focus:ring-color: var(--sage-green);">
+                            <button type="button" 
+                                    onclick="removeIngredient(this)"
+                                    class="px-3 py-2 text-red-500 hover:bg-red-50 rounded-lg transition">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>`
+                    ).join('');
+                    
+                    // Populate steps
+                    const steps = recipe.instructions.split('\n').filter(s => s.trim());
+                    const stepsList = document.getElementById('stepsList');
+                    stepsList.innerHTML = steps.map((step, index) => 
+                        `<div class="step-item flex gap-2">
+                            <span class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-sm" style="background-color: var(--sage-green);">${index + 1}</span>
+                            <textarea rows="2"
+                                      class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 resize-none"
+                                      style="focus:ring-color: var(--sage-green);">${step}</textarea>
+                            <button type="button" 
+                                    onclick="removeStep(this)"
+                                    class="px-3 py-2 text-red-500 hover:bg-red-50 rounded-lg transition h-fit">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>`
+                    ).join('');
+                    
+                    // Load existing image if available
+                    if (recipe.image_url) {
+                        setExistingImage(recipe.image_url);
+                    } else {
+                        // Reset image upload area
+                        const container = document.getElementById('imageUploadContainer');
+                        const preview = document.getElementById('imagePreview');
+                        const placeholder = document.getElementById('imageUploadPlaceholder');
+                        const removeBtn = document.getElementById('removeImageBtn');
+                        const input = document.getElementById('recipeImage');
+                        
+                        preview.src = '';
+                        preview.classList.add('hidden');
+                        placeholder.classList.remove('hidden');
+                        removeBtn.classList.add('hidden');
+                        container.classList.remove('has-image');
+                        input.value = '';
+                        currentImageFile = null;
+                        document.getElementById('existingImageUrl').value = '';
+                    }
+                    
+                    document.getElementById('recipeModal').classList.remove('hidden');
+                } else {
+                    alert(data.message || 'Failed to load recipe');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            });
+        }
+
+        function deleteRecipe(recipeId) {
+            if (confirm(`Are you sure you want to delete this recipe? This action cannot be undone.`)) {
+                fetch(`/api/recipes/${recipeId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        window.location.reload();
+                    } else {
+                        alert(data.message || 'Failed to delete recipe. Please try again.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred. Please try again.');
+                });
+            }
+        }
+
+        // Close modals when clicking outside
+        document.getElementById('recipeModal').addEventListener('click', function(e) {
+            if (e.target === this) closeRecipeModal();
+        });
+
+        document.getElementById('viewRecipeModal').addEventListener('click', function(e) {
+            if (e.target === this) closeViewRecipeModal();
+        });
+
+        // Notification dropdown functionality
+        function toggleNotificationDropdown() {
+            const dropdown = document.getElementById('notificationDropdown');
+            dropdown.classList.toggle('hidden');
+        }
+
+        function markAllAsRead() {
+            const badge = document.getElementById('navBadge');
+            badge.classList.add('hidden');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('notificationDropdown');
+            const button = event.target.closest('button');
+            
+            if (!dropdown.contains(event.target) && (!button || !button.onclick || button.onclick.toString().indexOf('toggleNotificationDropdown') === -1)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+    </script>
+    <script src="/static/js/meal-reminders.js"></script>
+    </div>
+</body>
+</html>
