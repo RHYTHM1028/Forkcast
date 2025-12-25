@@ -4,9 +4,10 @@ Recipes Blueprint - Recipe viewing and management pages.
 This blueprint handles:
     - Public recipe feed
     - User's personal recipes page
+    - Cooking mode page
 """
 
-from flask import Blueprint, render_template, session
+from flask import Blueprint, render_template, session, abort
 
 from ..models import get_db_cursor
 from ..helpers import login_required, get_current_user
@@ -29,13 +30,21 @@ def recipes():
     with get_db_cursor() as cur:
         cur.execute('''
             SELECT r.*, r.calories_per_serving as calories, u.username, u.full_name, u.profile_image,
+                   r.forked_from_id, r.original_author_id,
                    COALESCE(AVG(rr.rating), 0) as avg_rating,
-                   COUNT(DISTINCT rr.id) as rating_count
+                   COUNT(DISTINCT rr.id) as rating_count,
+                   orig.title as original_title,
+                   orig.is_public as original_is_public,
+                   orig_user.username as original_author_username,
+                   orig_user.full_name as original_author_name
             FROM recipes r
             JOIN users u ON r.user_id = u.id
             LEFT JOIN recipe_ratings rr ON r.id = rr.recipe_id
+            LEFT JOIN recipes orig ON r.forked_from_id = orig.id
+            LEFT JOIN users orig_user ON r.original_author_id = orig_user.id
             WHERE r.is_public = true
-            GROUP BY r.id, u.username, u.full_name, u.profile_image
+            GROUP BY r.id, u.username, u.full_name, u.profile_image,
+                     orig.title, orig.is_public, orig_user.username, orig_user.full_name
             ORDER BY r.created_at DESC
         ''')
         all_recipes = cur.fetchall()
@@ -54,15 +63,46 @@ def my_recipes():
     with get_db_cursor() as cur:
         cur.execute('''
             SELECT r.*, r.calories_per_serving as calories,
+                   r.forked_from_id, r.original_author_id,
                    COALESCE(AVG(rr.rating), 0) as avg_rating,
-                   COUNT(DISTINCT rr.id) as rating_count
+                   COUNT(DISTINCT rr.id) as rating_count,
+                   orig.title as original_title,
+                   orig.is_public as original_is_public,
+                   orig_user.username as original_author_username,
+                   orig_user.full_name as original_author_name
             FROM recipes r
             LEFT JOIN recipe_ratings rr ON r.id = rr.recipe_id
+            LEFT JOIN recipes orig ON r.forked_from_id = orig.id
+            LEFT JOIN users orig_user ON r.original_author_id = orig_user.id
             WHERE r.user_id = %s
-            GROUP BY r.id
+            GROUP BY r.id, orig.title, orig.is_public, orig_user.username, orig_user.full_name
             ORDER BY r.created_at DESC
         ''', (session['user_id'],))
         user_recipes = cur.fetchall()
     
     user = get_current_user()
     return render_template('my_recipes.html', user=user, recipes=user_recipes)
+
+
+@recipes_bp.route('/cook/<int:recipe_id>')
+@login_required
+def cook_mode(recipe_id):
+    """
+    Cooking mode page.
+    Displays recipe in a cooking-friendly format with step-by-step guidance.
+    """
+    with get_db_cursor() as cur:
+        cur.execute('''
+            SELECT r.*, r.calories_per_serving as calories, 
+                   u.username, u.full_name, u.profile_image
+            FROM recipes r
+            JOIN users u ON r.user_id = u.id
+            WHERE r.id = %s AND (r.is_public = true OR r.user_id = %s)
+        ''', (recipe_id, session['user_id']))
+        recipe = cur.fetchone()
+    
+    if not recipe:
+        abort(404)
+    
+    user = get_current_user()
+    return render_template('cook_mode.html', user=user, recipe=recipe)

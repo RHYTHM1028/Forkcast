@@ -40,12 +40,8 @@
         }
 
         @keyframes pulse {
-            0%, 100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.5;
-            }
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
 
         .toast-notification {
@@ -58,33 +54,17 @@
         }
 
         @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
 
         @keyframes slideOut {
-            from {
-                transform: translateX(0);
-                opacity: 1;
-            }
-            to {
-                transform: translateX(100%);
-                opacity: 0;
-            }
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
         }
 
         .slide-out {
             animation: slideOut 0.3s ease-out forwards;
-        }
-
-        .time-picker {
-            cursor: pointer;
         }
 
         /* Sidebar Navigation Styles */
@@ -101,9 +81,7 @@
             box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
         }
 
-        .sidebar:hover {
-            width: 250px;
-        }
+        .sidebar:hover { width: 250px; }
 
         .sidebar-item {
             display: flex;
@@ -116,14 +94,8 @@
             white-space: nowrap;
         }
 
-        .sidebar-item:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-
-        .sidebar-item.active {
-            opacity: 1;
-            background-color: rgba(255, 255, 255, 0.15);
-        }
+        .sidebar-item:hover { background-color: rgba(255, 255, 255, 0.1); }
+        .sidebar-item.active { opacity: 1; background-color: rgba(255, 255, 255, 0.15); }
 
         .sidebar-item svg {
             min-width: 24px;
@@ -133,9 +105,7 @@
             transition: margin-right 0.3s ease;
         }
 
-        .sidebar:hover .sidebar-item svg {
-            margin-right: 1rem;
-        }
+        .sidebar:hover .sidebar-item svg { margin-right: 1rem; }
 
         .sidebar-label {
             opacity: 0;
@@ -144,9 +114,7 @@
             font-weight: 500;
         }
 
-        .sidebar:hover .sidebar-label {
-            opacity: 1;
-        }
+        .sidebar:hover .sidebar-label { opacity: 1; }
 
         .sidebar-logo {
             padding: 1.5rem 1rem;
@@ -157,11 +125,7 @@
             gap: 0.75rem;
         }
 
-        .sidebar-logo img {
-            width: 40px;
-            height: 40px;
-            min-width: 40px;
-        }
+        .sidebar-logo img { width: 40px; height: 40px; min-width: 40px; }
 
         .sidebar-logo-text {
             opacity: 0;
@@ -172,9 +136,7 @@
             white-space: nowrap;
         }
 
-        .sidebar:hover .sidebar-logo-text {
-            opacity: 1;
-        }
+        .sidebar:hover .sidebar-logo-text { opacity: 1; }
 
         .sidebar-footer {
             position: absolute;
@@ -188,8 +150,25 @@
             transition: margin-left 0.3s ease;
         }
 
-        body {
-            overflow-x: hidden;
+        body { overflow-x: hidden; }
+
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--sage-green);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .filter-btn.active {
+            background-color: var(--sage-green) !important;
+            color: white !important;
         }
     </style>
 </head>
@@ -208,7 +187,7 @@
             <span class="sidebar-label">Home</span>
         </a>
         
-        <a href="{{ url_for('profile.dashboard') }}" class="sidebar-item">
+        <a href="{{ url_for('dashboard.dashboard') }}" class="sidebar-item">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 12a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1v-7z"></path>
             </svg>
@@ -269,110 +248,129 @@
 
     <!-- Main Content -->
     <div class="main-content">
-    <div class="max-w-7xl mx-auto px-4 py-8">
-        <!-- Header Section -->
-        <div class="mb-6">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div>
-                    <h1 class="text-3xl font-bold mb-2" style="color: var(--deep-charcoal);">Meal Reminders & Notifications</h1>
-                    <p class="text-gray-600">Stay on track with your meal plan through timely reminders</p>
-                </div>
-                <button onclick="showSettingsModal()" 
-                        class="px-4 py-2 rounded-lg text-white font-medium hover:opacity-90 transition flex items-center gap-2"
-                        style="background-color: var(--sage-green);">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    </svg>
-                    Reminder Settings
-                </button>
-            </div>
-        </div>
-
-        <!-- Notification Stats -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <div class="flex items-center justify-between">
+        <div class="max-w-7xl mx-auto px-4 py-8">
+            <!-- Header Section -->
+            <div class="mb-6">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
-                        <p class="text-gray-600 text-sm mb-1">Total Notifications</p>
-                        <p class="text-3xl font-bold" style="color: var(--deep-charcoal);" id="totalNotifications">0</p>
+                        <h1 class="text-3xl font-bold mb-2" style="color: var(--deep-charcoal);">Notifications</h1>
+                        <p class="text-gray-600">Stay updated with reviews, meal reminders, and more</p>
                     </div>
-                    <div class="p-3 rounded-full" style="background-color: rgba(74, 124, 89, 0.1);">
-                        <svg class="w-8 h-8" style="color: var(--sage-green);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                        </svg>
+                    <div class="flex gap-2">
+                        <button onclick="markAllAsRead()" 
+                                class="px-4 py-2 rounded-lg font-medium hover:opacity-90 transition flex items-center gap-2 border-2"
+                                style="border-color: var(--sage-green); color: var(--sage-green);">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Mark All Read
+                        </button>
+                        <button onclick="showSettingsModal()" 
+                                class="px-4 py-2 rounded-lg text-white font-medium hover:opacity-90 transition flex items-center gap-2"
+                                style="background-color: var(--sage-green);">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            Reminder Settings
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notification Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500">Total Notifications</p>
+                            <p id="totalNotifications" class="text-2xl font-bold" style="color: var(--deep-charcoal);">0</p>
+                        </div>
+                        <div class="p-3 rounded-full" style="background-color: rgba(74, 124, 89, 0.1);">
+                            <svg class="w-6 h-6" style="color: var(--sage-green);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500">Unread</p>
+                            <p id="unreadCount" class="text-2xl font-bold" style="color: var(--terracotta);">0</p>
+                        </div>
+                        <div class="p-3 rounded-full" style="background-color: rgba(224, 122, 95, 0.1);">
+                            <svg class="w-6 h-6" style="color: var(--terracotta);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500">Today's Reminders</p>
+                            <p id="todayReminders" class="text-2xl font-bold" style="color: var(--sage-green);">0</p>
+                        </div>
+                        <div class="p-3 rounded-full" style="background-color: rgba(74, 124, 89, 0.1);">
+                            <svg class="w-6 h-6" style="color: var(--sage-green);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-600 text-sm mb-1">Unread</p>
-                        <p class="text-3xl font-bold" style="color: var(--terracotta);" id="unreadCount">0</p>
-                    </div>
-                    <div class="p-3 rounded-full" style="background-color: rgba(224, 122, 95, 0.1);">
-                        <svg class="w-8 h-8" style="color: var(--terracotta);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-1.14.76a2 2 0 01-2.22 0l-1.14-.76"></path>
-                        </svg>
-                    </div>
+            <!-- Filter Tabs -->
+            <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+                <div class="flex flex-wrap gap-3">
+                    <button onclick="filterNotifications('all')" id="filter-all"
+                            class="filter-btn active px-4 py-2 rounded-lg font-medium transition">
+                        All
+                    </button>
+                    <button onclick="filterNotifications('unread')" id="filter-unread"
+                            class="filter-btn px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition">
+                        Unread
+                    </button>
+                    <button onclick="filterNotifications('review')" id="filter-review"
+                            class="filter-btn px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition">
+                        Reviews
+                    </button>
+                    <button onclick="filterNotifications('meal')" id="filter-meal"
+                            class="filter-btn px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition">
+                        Meal Reminders
+                    </button>
+                    <button onclick="filterNotifications('shopping')" id="filter-shopping"
+                            class="filter-btn px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition">
+                        Shopping List
+                    </button>
+                    <button onclick="filterNotifications('recipe')" id="filter-recipe"
+                            class="filter-btn px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition">
+                        Recipes
+                    </button>
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-600 text-sm mb-1">Today's Reminders</p>
-                        <p class="text-3xl font-bold" style="color: var(--deep-charcoal);" id="todayReminders">0</p>
-                    </div>
-                    <div class="p-3 rounded-full" style="background-color: rgba(74, 124, 89, 0.1);">
-                        <svg class="w-8 h-8" style="color: var(--sage-green);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                    </div>
-                </div>
+            <!-- Loading State -->
+            <div id="loadingState" class="flex justify-center py-12">
+                <div class="loading-spinner"></div>
             </div>
-        </div>
 
-        <!-- Filter Tabs -->
-        <div class="bg-white rounded-lg shadow-md p-4 mb-6">
-            <div class="flex flex-wrap gap-3">
-                <button onclick="filterNotifications('all')" id="filter-all"
-                        class="filter-btn px-4 py-2 rounded-lg font-medium transition"
-                        style="background-color: var(--sage-green); color: white;">
-                    All
-                </button>
-                <button onclick="filterNotifications('unread')" id="filter-unread"
-                        class="filter-btn px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition">
-                    Unread
-                </button>
-                <button onclick="filterNotifications('meal')" id="filter-meal"
-                        class="filter-btn px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition">
-                    Meal Reminders
-                </button>
-                <button onclick="filterNotifications('shopping')" id="filter-shopping"
-                        class="filter-btn px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition">
-                    Shopping List
-                </button>
-                <button onclick="filterNotifications('recipe')" id="filter-recipe"
-                        class="filter-btn px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition">
-                    Recipes
-                </button>
+            <!-- Notifications List -->
+            <div id="notificationsList" class="space-y-3 hidden">
+                <!-- Notifications will be dynamically inserted here -->
             </div>
-        </div>
 
-        <!-- Notifications List -->
-        <div id="notificationsList" class="space-y-3">
-            <!-- Notifications will be dynamically inserted here -->
-        </div>
-
-        <!-- Empty State -->
-        <div id="emptyState" class="hidden bg-white rounded-lg shadow-md p-12 text-center">
-            <svg class="w-20 h-20 mx-auto mb-4 opacity-30" style="color: var(--sage-green);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-            </svg>
-            <p class="text-xl text-gray-500 mb-2">No notifications yet</p>
-            <p class="text-gray-400">You'll see meal reminders and updates here</p>
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden bg-white rounded-lg shadow-md p-12 text-center">
+                <svg class="w-20 h-20 mx-auto mb-4 opacity-30" style="color: var(--sage-green);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                </svg>
+                <p class="text-xl text-gray-500 mb-2">No notifications yet</p>
+                <p class="text-gray-400">You'll see reviews, meal reminders, and updates here</p>
+            </div>
         </div>
     </div>
 
@@ -389,73 +387,129 @@
             </div>
 
             <div class="p-6 space-y-6">
+                <!-- Current GMT+6 Time Display -->
+                <div class="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div class="flex items-center gap-2">
+                        <span class="text-2xl">🕐</span>
+                        <div>
+                            <p class="font-medium text-blue-900">Current Time (GMT+6): <span id="currentGMT6Time" class="font-bold">--:--</span></p>
+                            <p class="text-sm text-blue-700">All reminders use GMT+6 timezone</p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Enable/Disable Reminders -->
                 <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div>
-                        <h3 class="font-medium mb-1" style="color: var(--deep-charcoal);">Enable Meal Reminders</h3>
-                        <p class="text-sm text-gray-600">Receive notifications for your planned meals</p>
+                        <p class="font-medium" style="color: var(--deep-charcoal);">Enable Meal Reminders</p>
+                        <p class="text-sm text-gray-500">Get notified before your scheduled meals</p>
                     </div>
                     <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="enableReminders" checked class="sr-only peer">
+                        <input type="checkbox" id="enableReminders" class="sr-only peer" checked>
                         <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
                     </label>
                 </div>
 
                 <!-- Meal Time Settings -->
                 <div>
-                    <h3 class="font-medium mb-4" style="color: var(--deep-charcoal);">Reminder Times Before Meals</h3>
+                    <h3 class="font-medium mb-4" style="color: var(--deep-charcoal);">Meal Times & Reminder Settings</h3>
+                    <p class="text-sm text-gray-500 mb-4">💡 Tip: Set "At meal time" to get reminded exactly at the time you set, or choose minutes before to get an early reminder.</p>
                     
                     <div class="space-y-4">
-                        <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                            <div>
-                                <p class="font-medium">Breakfast</p>
-                                <p class="text-sm text-gray-600">Remind me</p>
+                        <!-- Breakfast -->
+                        <div class="p-4 bg-gray-50 rounded-lg">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="font-medium">🌅 Breakfast</span>
                             </div>
-                            <select id="breakfastReminder" class="px-4 py-2 border border-gray-300 rounded-lg">
-                                <option value="0">At meal time</option>
-                                <option value="15">15 minutes before</option>
-                                <option value="30" selected>30 minutes before</option>
-                                <option value="60">1 hour before</option>
-                            </select>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-sm text-gray-500">Meal Time</label>
+                                    <input type="time" id="breakfastTime" value="08:00" 
+                                           class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-500">Remind me (minutes before)</label>
+                                    <select id="breakfastReminder" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                                        <option value="0">At meal time</option>
+                                        <option value="15">15 minutes before</option>
+                                        <option value="30" selected>30 minutes before</option>
+                                        <option value="60">1 hour before</option>
+                                        <option value="120">2 hours before</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                            <div>
-                                <p class="font-medium">Lunch</p>
-                                <p class="text-sm text-gray-600">Remind me</p>
+                        <!-- Lunch -->
+                        <div class="p-4 bg-gray-50 rounded-lg">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="font-medium">☀️ Lunch</span>
                             </div>
-                            <select id="lunchReminder" class="px-4 py-2 border border-gray-300 rounded-lg">
-                                <option value="0">At meal time</option>
-                                <option value="15">15 minutes before</option>
-                                <option value="30" selected>30 minutes before</option>
-                                <option value="60">1 hour before</option>
-                            </select>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-sm text-gray-500">Meal Time</label>
+                                    <input type="time" id="lunchTime" value="12:00" 
+                                           class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-500">Remind me (minutes before)</label>
+                                    <select id="lunchReminder" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                                        <option value="0">At meal time</option>
+                                        <option value="15">15 minutes before</option>
+                                        <option value="30" selected>30 minutes before</option>
+                                        <option value="60">1 hour before</option>
+                                        <option value="120">2 hours before</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                            <div>
-                                <p class="font-medium">Dinner</p>
-                                <p class="text-sm text-gray-600">Remind me</p>
+                        <!-- Dinner -->
+                        <div class="p-4 bg-gray-50 rounded-lg">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="font-medium">🌙 Dinner</span>
                             </div>
-                            <select id="dinnerReminder" class="px-4 py-2 border border-gray-300 rounded-lg">
-                                <option value="0">At meal time</option>
-                                <option value="15">15 minutes before</option>
-                                <option value="30" selected>30 minutes before</option>
-                                <option value="60">1 hour before</option>
-                            </select>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-sm text-gray-500">Meal Time</label>
+                                    <input type="time" id="dinnerTime" value="18:00" 
+                                           class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-500">Remind me (minutes before)</label>
+                                    <select id="dinnerReminder" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                                        <option value="0">At meal time</option>
+                                        <option value="15">15 minutes before</option>
+                                        <option value="30" selected>30 minutes before</option>
+                                        <option value="60">1 hour before</option>
+                                        <option value="120">2 hours before</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                            <div>
-                                <p class="font-medium">Snacks</p>
-                                <p class="text-sm text-gray-600">Remind me</p>
+                        <!-- Snack -->
+                        <div class="p-4 bg-gray-50 rounded-lg">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="font-medium">🍎 Snack</span>
                             </div>
-                            <select id="snackReminder" class="px-4 py-2 border border-gray-300 rounded-lg">
-                                <option value="0">At meal time</option>
-                                <option value="15" selected>15 minutes before</option>
-                                <option value="30">30 minutes before</option>
-                                <option value="60">1 hour before</option>
-                            </select>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-sm text-gray-500">Snack Time</label>
+                                    <input type="time" id="snackTime" value="15:00" 
+                                           class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-500">Remind me (minutes before)</label>
+                                    <select id="snackReminder" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                                        <option value="0">At meal time</option>
+                                        <option value="15">15 minutes before</option>
+                                        <option value="30" selected>30 minutes before</option>
+                                        <option value="60">1 hour before</option>
+                                        <option value="120">2 hours before</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -465,24 +519,36 @@
                     <h3 class="font-medium mb-4" style="color: var(--deep-charcoal);">Additional Notifications</h3>
                     
                     <div class="space-y-3">
-                        <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-                            <input type="checkbox" id="notifyWeeklyPlan" checked class="w-4 h-4 rounded" style="accent-color: var(--sage-green);">
-                            <span class="ml-3 text-sm">Weekly meal plan summary (Sundays)</span>
+                        <label class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
+                            <input type="checkbox" id="notifyWeeklyPlan" checked class="w-5 h-5 rounded" style="accent-color: var(--sage-green);">
+                            <div>
+                                <p class="font-medium">Weekly meal plan notifications</p>
+                                <p class="text-sm text-gray-500">Get notified when your weekly plan is ready</p>
+                            </div>
                         </label>
-
-                        <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-                            <input type="checkbox" id="notifyShoppingList" checked class="w-4 h-4 rounded" style="accent-color: var(--sage-green);">
-                            <span class="ml-3 text-sm">Shopping list reminders (when list is generated)</span>
+                        
+                        <label class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
+                            <input type="checkbox" id="notifyShoppingList" checked class="w-5 h-5 rounded" style="accent-color: var(--sage-green);">
+                            <div>
+                                <p class="font-medium">Shopping list updates</p>
+                                <p class="text-sm text-gray-500">Get notified when items are added to your list</p>
+                            </div>
                         </label>
-
-                        <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-                            <input type="checkbox" id="notifyNewRecipes" checked class="w-4 h-4 rounded" style="accent-color: var(--sage-green);">
-                            <span class="ml-3 text-sm">Recipe suggestions based on your preferences</span>
+                        
+                        <label class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
+                            <input type="checkbox" id="notifyNewRecipes" checked class="w-5 h-5 rounded" style="accent-color: var(--sage-green);">
+                            <div>
+                                <p class="font-medium">Recipe suggestions</p>
+                                <p class="text-sm text-gray-500">Get personalized recipe recommendations</p>
+                            </div>
                         </label>
-
-                        <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-                            <input type="checkbox" id="notifyCalorieGoal" class="w-4 h-4 rounded" style="accent-color: var(--sage-green);">
-                            <span class="ml-3 text-sm">Daily calorie goal progress updates</span>
+                        
+                        <label class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
+                            <input type="checkbox" id="notifyCalorieGoal" checked class="w-5 h-5 rounded" style="accent-color: var(--sage-green);">
+                            <div>
+                                <p class="font-medium">Calorie goal alerts</p>
+                                <p class="text-sm text-gray-500">Get notified about your daily calorie progress</p>
+                            </div>
                         </label>
                     </div>
                 </div>
@@ -492,23 +558,48 @@
                     <h3 class="font-medium mb-4" style="color: var(--deep-charcoal);">Notification Sound</h3>
                     
                     <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                        <span class="text-sm">Play sound for notifications</span>
+                        <div>
+                            <p class="font-medium">Enable notification sounds</p>
+                            <p class="text-sm text-gray-500">Play a sound when notifications arrive</p>
+                        </div>
                         <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" id="enableSound" checked class="sr-only peer">
+                            <input type="checkbox" id="enableSound" class="sr-only peer" checked>
                             <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
                         </label>
+                    </div>
+                </div>
+
+                <!-- Test Reminder Button -->
+                <div class="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div class="flex flex-col gap-3">
+                        <div>
+                            <h4 class="font-medium text-blue-900">Test Reminders</h4>
+                            <p class="text-sm text-blue-700">Verify that notifications are working properly</p>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="testMealReminder()" 
+                                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium">
+                                🔔 Send Test Now
+                            </button>
+                            <button onclick="scheduleQuickReminder()" 
+                                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium">
+                                ⏰ Set 1-Min Reminder
+                            </button>
+                        </div>
+                        <p id="quickReminderStatus" class="text-xs text-blue-600 hidden"></p>
                     </div>
                 </div>
 
                 <!-- Action Buttons -->
                 <div class="flex gap-3 pt-4">
                     <button onclick="saveSettings()" 
-                            class="flex-1 px-4 py-2 rounded-lg text-white font-medium hover:opacity-90 transition"
+                            class="flex-1 px-6 py-3 rounded-lg text-white font-medium hover:opacity-90 transition"
                             style="background-color: var(--sage-green);">
                         Save Settings
                     </button>
                     <button onclick="closeSettingsModal()" 
-                            class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition">
+                            class="px-6 py-3 rounded-lg font-medium border-2 hover:bg-gray-50 transition"
+                            style="color: var(--deep-charcoal); border-color: var(--deep-charcoal);">
                         Cancel
                     </button>
                 </div>
@@ -517,138 +608,502 @@
     </div>
 
     <script>
-        // Notification data structure
+        // State
         let notifications = [];
         let currentFilter = 'all';
-        let notificationIdCounter = 1;
+        let settings = {};
+        let pollingInterval = null;
+        let reminderCheckInterval = null;
+        let triggeredReminders = new Set(); // Track which reminders have been triggered today
+        let notificationSound = null;
 
-        // Sample notifications data
-        function initializeNotifications() {
-            const now = new Date();
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadNotifications();
+            loadStats();
+            loadSettings();
+            // Note: meal-reminders.js handles the global reminder checking
+            // We don't start our own checker here to avoid duplicate notifications
+            startPolling();
+            requestNotificationPermission();
+            initNotificationSound();
             
-            notifications = [
-                {
-                    id: notificationIdCounter++,
-                    type: 'meal',
-                    title: 'Upcoming Meal: Breakfast',
-                    message: 'Avocado Toast with Poached Eggs in 30 minutes',
-                    time: new Date(now.getTime() - 5 * 60000), // 5 minutes ago
-                    read: false,
-                    action: 'calendar_template.html'
-                },
-                {
-                    id: notificationIdCounter++,
-                    type: 'meal',
-                    title: 'Lunch Reminder',
-                    message: 'Time to prepare your Classic Spaghetti',
-                    time: new Date(now.getTime() - 2 * 60 * 60000), // 2 hours ago
-                    read: false,
-                    action: 'recipe.html'
-                },
-                {
-                    id: notificationIdCounter++,
-                    type: 'shopping',
-                    title: 'Shopping List Ready',
-                    message: 'Your weekly shopping list has been generated with 15 items',
-                    time: new Date(now.getTime() - 24 * 60 * 60000), // 1 day ago
-                    read: true,
-                    action: 'shopping_list.html'
-                },
-                {
-                    id: notificationIdCounter++,
-                    type: 'recipe',
-                    title: 'New Recipe Suggestion',
-                    message: 'Try this healthy Grilled Chicken Salad for dinner',
-                    time: new Date(now.getTime() - 2 * 24 * 60 * 60000), // 2 days ago
-                    read: true,
-                    action: 'recipe.html'
-                },
-                {
-                    id: notificationIdCounter++,
-                    type: 'meal',
-                    title: 'Weekly Plan Ready',
-                    message: 'Your meal plan for Nov 19-25 is ready to view',
-                    time: new Date(now.getTime() - 3 * 24 * 60 * 60000), // 3 days ago
-                    read: true,
-                    action: 'calendar_template.html'
-                }
-            ];
+            // Reset triggered reminders at midnight
+            scheduleMidnightReset();
+        });
 
-            renderNotifications();
-            updateStats();
-            updateNavBadge();
+        // Request browser notification permission
+        function requestNotificationPermission() {
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        console.log('Notification permission granted');
+                    }
+                });
+            }
         }
 
-        // Render notifications
+        // Initialize notification sound
+        function initNotificationSound() {
+            notificationSound = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleVIcNpTqvJJbLRhJqOC6e0gZNaPhsXpOMj1Lp9yxbzAlTqfZoWQ5O0um1plXNzhOqMqML0tAabTPdy0xPXLPvWchIj6Q1apOERQ7pNiZQgAIMqPiilkAAPFAn+uDUwD/qDed74xL/9OfMqjtj0n/qpAzsfGGRf/ZgzrD34VG/9J8R9ryhEr/x3td+OKDT//AfXXuxHZw/6yJi++2b4j/npeU7axuk/+RoJnxp22Z/4mmo/Wka5z/g6im+aFpnf9+q6n7nmie/3msq/udaJ//dq6s/Jxon/90r639m2if/3Kvrf2baKD/cq+u/Ztonv9yr679mmig/3Kvrf2aaJ//ca+t/Ztonv9xr679mmig/3Gvrf2aaKD/cq+t/Zpon/9yr679mmig/3Kvrf2aaJ//ca6t/Ztonv9xr679mmif/3Gvrf2aaKD/ca+t/Ztonv9xr679mmig/3Gvrf2aaKD/ca+t/Zton/9xr679mmif/3Gvrf2aaKD/ca+t/Zpon/9yr679mmig/3Kvrv2aaJ//cq+u/Zpon/9yr639mmig/3Kvrv2aaJ//cq+t/Zpon/9yr679mmig/3Kurv2aaJ//cq+t/Zpoof9yr679mmig/3Gvrf2aaKD/ca+t/Zponv9xr679mmig/3Gvrf2aaJ//ca+t/Zpon/9xr639mmig/3Gvrf2aaKD/ca+t/Zponv8=');
+        }
+
+        // Play notification sound
+        function playNotificationSound() {
+            if (settings.sound_enabled !== false && notificationSound) {
+                notificationSound.currentTime = 0;
+                notificationSound.play().catch(e => console.log('Could not play sound:', e));
+            }
+        }
+
+        // Schedule reset of triggered reminders at midnight
+        function scheduleMidnightReset() {
+            const now = new Date();
+            const tomorrow = new Date(now);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(0, 0, 0, 0);
+            const msUntilMidnight = tomorrow - now;
+            
+            setTimeout(() => {
+                triggeredReminders.clear();
+                localStorage.removeItem('triggeredRemindersToday');
+                scheduleMidnightReset(); // Schedule next reset
+            }, msUntilMidnight);
+            
+            // Load previously triggered reminders from localStorage
+            const savedReminders = localStorage.getItem('triggeredRemindersToday');
+            if (savedReminders) {
+                const saved = JSON.parse(savedReminders);
+                if (saved.date === new Date().toDateString()) {
+                    triggeredReminders = new Set(saved.reminders);
+                }
+            }
+        }
+
+        // Save triggered reminders to localStorage
+        function saveTriggeredReminders() {
+            localStorage.setItem('triggeredRemindersToday', JSON.stringify({
+                date: new Date().toDateString(),
+                reminders: Array.from(triggeredReminders)
+            }));
+        }
+
+        // Start meal reminder checker - runs every 30 seconds for better accuracy
+        function startMealReminderChecker() {
+            console.log('Starting meal reminder checker...');
+            
+            // Check immediately
+            checkMealReminders();
+            
+            // Then check every 30 seconds for better accuracy
+            reminderCheckInterval = setInterval(() => {
+                checkMealReminders();
+            }, 30000); // Check every 30 seconds
+        }
+
+        // Get current time in GMT+6 timezone
+        function getGMT6Time() {
+            const now = new Date();
+            const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+            return new Date(utcTime + (6 * 3600000)); // GMT+6
+        }
+
+        // Check if any meal reminders should be triggered
+        function checkMealReminders() {
+            console.log('Checking meal reminders...', { settings, remindersEnabled: settings.reminders_enabled });
+            
+            if (!settings || settings.reminders_enabled === false) {
+                console.log('Reminders disabled or settings not loaded');
+                return;
+            }
+
+            // Use GMT+6 timezone
+            const gmt6 = getGMT6Time();
+            const currentTime = gmt6.getHours() * 60 + gmt6.getMinutes(); // Current time in minutes (GMT+6)
+            console.log(`[GMT+6] Current time: ${gmt6.getHours()}:${String(gmt6.getMinutes()).padStart(2,'0')} (${currentTime} minutes)`);
+            
+            const meals = [
+                { type: 'breakfast', time: settings.breakfast_time, reminderMinutes: settings.breakfast_reminder_minutes || 0 },
+                { type: 'lunch', time: settings.lunch_time, reminderMinutes: settings.lunch_reminder_minutes || 0 },
+                { type: 'dinner', time: settings.dinner_time, reminderMinutes: settings.dinner_reminder_minutes || 0 },
+                { type: 'snack', time: settings.snack_time, reminderMinutes: settings.snack_reminder_minutes || 0 }
+            ];
+
+            meals.forEach(meal => {
+                if (!meal.time) {
+                    console.log(`No time set for ${meal.type}`);
+                    return;
+                }
+                
+                const [hours, minutes] = meal.time.split(':').map(Number);
+                const mealTimeMinutes = hours * 60 + minutes;
+                const reminderTimeMinutes = mealTimeMinutes - meal.reminderMinutes;
+                
+                // Check if current time matches reminder time (within 3 minute window for reliability)
+                const reminderKey = `${meal.type}-${gmt6.toDateString()}`;
+                const isInWindow = currentTime >= reminderTimeMinutes && currentTime < reminderTimeMinutes + 3;
+                const alreadyTriggered = triggeredReminders.has(reminderKey);
+                
+                const reminderHour = Math.floor(reminderTimeMinutes / 60);
+                const reminderMin = reminderTimeMinutes % 60;
+                console.log(`${meal.type}: mealTime=${meal.time}, reminderAt=${reminderHour}:${String(reminderMin).padStart(2,'0')}, current=${currentTime}, inWindow=${isInWindow}, triggered=${alreadyTriggered}`);
+                
+                if (isInWindow && !alreadyTriggered) {
+                    console.log(`🔔 Triggering ${meal.type} reminder!`);
+                    triggeredReminders.add(reminderKey);
+                    saveTriggeredReminders();
+                    triggerMealReminder(meal.type, meal.time, meal.reminderMinutes);
+                }
+            });
+        }
+
+        // Trigger a meal reminder
+        async function triggerMealReminder(mealType, mealTime, minutesBefore) {
+            const mealNames = {
+                breakfast: 'Breakfast',
+                lunch: 'Lunch',
+                dinner: 'Dinner',
+                snack: 'Snack'
+            };
+            
+            const title = `${mealNames[mealType]} Reminder`;
+            const message = `It's almost time for ${mealNames[mealType].toLowerCase()}! Your meal is scheduled for ${mealTime}.`;
+            
+            // Play sound
+            playNotificationSound();
+            
+            // Show browser notification
+            if ('Notification' in window && Notification.permission === 'granted') {
+                const notification = new Notification(title, {
+                    body: message,
+                    icon: '/static/images/logo.png',
+                    tag: `meal-${mealType}`,
+                    requireInteraction: true
+                });
+                
+                notification.onclick = () => {
+                    window.focus();
+                    notification.close();
+                };
+            }
+            
+            // Show in-app toast
+            showMealReminderToast(title, message, mealType);
+            
+            // Create notification in database
+            try {
+                await fetch('/notifications/api/create-meal-reminder', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        meal_type: mealType,
+                        meal_time: mealTime
+                    })
+                });
+                
+                // Refresh notifications list
+                loadNotifications(true);
+                loadStats();
+            } catch (error) {
+                console.error('Error creating meal reminder:', error);
+            }
+        }
+
+        // Show meal reminder toast (special styled)
+        function showMealReminderToast(title, message, mealType) {
+            const mealEmojis = {
+                breakfast: '🌅',
+                lunch: '☀️',
+                dinner: '🌙',
+                snack: '🍎'
+            };
+            
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification bg-white rounded-lg shadow-2xl p-4 border-l-4';
+            toast.style.borderColor = 'var(--sage-green)';
+            toast.style.maxWidth = '400px';
+            
+            toast.innerHTML = `
+                <div class="flex items-start gap-3">
+                    <div class="text-3xl">${mealEmojis[mealType] || '🍽️'}</div>
+                    <div class="flex-1">
+                        <h4 class="font-bold text-lg" style="color: var(--deep-charcoal);">${escapeHtml(title)}</h4>
+                        <p class="text-gray-600 mt-1">${escapeHtml(message)}</p>
+                        <div class="flex gap-2 mt-3">
+                            <a href="/calendar" class="px-3 py-1 text-sm rounded-lg text-white" style="background-color: var(--sage-green);">
+                                View Meal Plan
+                            </a>
+                            <button onclick="this.closest('.toast-notification').remove()" class="px-3 py-1 text-sm rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100">
+                                Dismiss
+                            </button>
+                        </div>
+                    </div>
+                    <button onclick="this.closest('.toast-notification').remove()" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            // Auto-remove after 30 seconds (longer for meal reminders)
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.classList.add('slide-out');
+                    setTimeout(() => toast.remove(), 300);
+                }
+            }, 30000);
+        }
+
+        // Test meal reminder function
+        function testMealReminder() {
+            const mealTypes = ['breakfast', 'lunch', 'dinner', 'snack'];
+            const randomMeal = mealTypes[Math.floor(Math.random() * mealTypes.length)];
+            const now = new Date();
+            
+            // Properly calculate time 5 minutes from now (handle hour rollover)
+            const futureTime = new Date(now.getTime() + 5 * 60000);
+            const testTime = `${String(futureTime.getHours()).padStart(2, '0')}:${String(futureTime.getMinutes()).padStart(2, '0')}`;
+            
+            triggerMealReminder(randomMeal, testTime, 5);
+            showToast('Test reminder sent! Check your browser notifications.', 'success');
+        }
+
+        // Schedule a quick reminder 1 minute from now to test real-time functionality
+        function scheduleQuickReminder() {
+            const now = new Date();
+            const futureTime = new Date(now.getTime() + 60000); // 1 minute from now
+            const reminderTime = `${String(futureTime.getHours()).padStart(2, '0')}:${String(futureTime.getMinutes()).padStart(2, '0')}`;
+            
+            // Temporarily update breakfast time to 1 minute from now with 0 minute reminder
+            const originalBreakfastTime = settings.breakfast_time;
+            const originalBreakfastMinutes = settings.breakfast_reminder_minutes;
+            
+            settings.breakfast_time = reminderTime;
+            settings.breakfast_reminder_minutes = 0; // Trigger at exact time
+            
+            // Clear any previous breakfast triggers for today
+            const today = now.toDateString();
+            triggeredReminders.delete(`breakfast-${today}`);
+            saveTriggeredReminders();
+            
+            // Update status
+            const statusEl = document.getElementById('quickReminderStatus');
+            statusEl.textContent = `⏰ Reminder scheduled for ${reminderTime} (in ~1 minute). Keep this page open!`;
+            statusEl.classList.remove('hidden');
+            
+            showToast(`Reminder set for ${reminderTime}! Keep this page open.`, 'success');
+            
+            console.log(`Quick reminder scheduled for ${reminderTime}`);
+            
+            // Restore original settings after 2 minutes
+            setTimeout(() => {
+                settings.breakfast_time = originalBreakfastTime;
+                settings.breakfast_reminder_minutes = originalBreakfastMinutes;
+                statusEl.classList.add('hidden');
+            }, 120000);
+        }
+
+        // Start real-time polling for new notifications
+        function startPolling() {
+            // Poll every 30 seconds for new notifications
+            pollingInterval = setInterval(() => {
+                loadNotifications(true);
+                loadStats();
+            }, 30000);
+        }
+
+        // Load notifications from API
+        async function loadNotifications(silent = false) {
+            if (!silent) {
+                document.getElementById('loadingState').classList.remove('hidden');
+                document.getElementById('notificationsList').classList.add('hidden');
+                document.getElementById('emptyState').classList.add('hidden');
+            }
+
+            try {
+                const params = new URLSearchParams();
+                if (currentFilter !== 'all' && currentFilter !== 'unread') {
+                    params.set('type', currentFilter);
+                }
+                if (currentFilter === 'unread') {
+                    params.set('unread', 'true');
+                }
+
+                const response = await fetch(`/notifications/api/list?${params.toString()}`);
+                notifications = await response.json();
+                
+                renderNotifications();
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+                showToast('Failed to load notifications', 'error');
+            } finally {
+                document.getElementById('loadingState').classList.add('hidden');
+            }
+        }
+
+        // Load notification stats
+        async function loadStats() {
+            try {
+                const response = await fetch('/notifications/api/stats');
+                const stats = await response.json();
+                
+                document.getElementById('totalNotifications').textContent = stats.total;
+                document.getElementById('unreadCount').textContent = stats.unread;
+                document.getElementById('todayReminders').textContent = stats.today_reminders;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Load reminder settings
+        async function loadSettings() {
+            try {
+                const response = await fetch('/notifications/api/settings');
+                settings = await response.json();
+                console.log('Loaded settings from server:', settings);
+                
+                // Ensure reminders_enabled defaults to true if not set
+                if (settings.reminders_enabled === undefined || settings.reminders_enabled === null) {
+                    settings.reminders_enabled = true;
+                }
+                
+                // Populate form fields
+                document.getElementById('enableReminders').checked = settings.reminders_enabled !== false;
+                document.getElementById('breakfastTime').value = settings.breakfast_time || '08:00';
+                document.getElementById('lunchTime').value = settings.lunch_time || '12:00';
+                document.getElementById('dinnerTime').value = settings.dinner_time || '18:00';
+                document.getElementById('snackTime').value = settings.snack_time || '15:00';
+                document.getElementById('breakfastReminder').value = settings.breakfast_reminder_minutes || 30;
+                document.getElementById('lunchReminder').value = settings.lunch_reminder_minutes || 30;
+                document.getElementById('dinnerReminder').value = settings.dinner_reminder_minutes || 30;
+                document.getElementById('snackReminder').value = settings.snack_reminder_minutes || 30;
+                document.getElementById('notifyWeeklyPlan').checked = settings.notify_weekly_plan !== false;
+                document.getElementById('notifyShoppingList').checked = settings.notify_shopping_list !== false;
+                document.getElementById('notifyNewRecipes').checked = settings.notify_new_recipes !== false;
+                document.getElementById('notifyCalorieGoal').checked = settings.notify_calorie_goal !== false;
+                document.getElementById('enableSound').checked = settings.sound_enabled !== false;
+                
+                // Save to localStorage for use across pages
+                localStorage.setItem('mealReminderSettings', JSON.stringify(settings));
+                
+                return settings;
+            } catch (error) {
+                console.error('Error loading settings:', error);
+                
+                // Try to load from localStorage as fallback
+                const cachedSettings = localStorage.getItem('mealReminderSettings');
+                if (cachedSettings) {
+                    settings = JSON.parse(cachedSettings);
+                    console.log('Loaded settings from cache:', settings);
+                } else {
+                    // Set default settings
+                    settings = {
+                        reminders_enabled: true,
+                        breakfast_time: '08:00',
+                        lunch_time: '12:00',
+                        dinner_time: '18:00',
+                        snack_time: '15:00',
+                        breakfast_reminder_minutes: 30,
+                        lunch_reminder_minutes: 30,
+                        dinner_reminder_minutes: 30,
+                        snack_reminder_minutes: 30,
+                        sound_enabled: true
+                    };
+                    console.log('Using default settings:', settings);
+                }
+                return settings;
+            }
+        }
+
+        // Render notifications list
         function renderNotifications() {
             const container = document.getElementById('notificationsList');
-            const filtered = notifications.filter(n => {
-                if (currentFilter === 'all') return true;
-                if (currentFilter === 'unread') return !n.read;
-                return n.type === currentFilter;
-            });
-
-            if (filtered.length === 0) {
-                container.innerHTML = '';
+            
+            if (notifications.length === 0) {
+                container.classList.add('hidden');
                 document.getElementById('emptyState').classList.remove('hidden');
                 return;
             }
 
             document.getElementById('emptyState').classList.add('hidden');
+            container.classList.remove('hidden');
 
-            container.innerHTML = filtered.map(notif => `
-                <div class="notification-item ${!notif.read ? 'unread' : ''} bg-white rounded-lg shadow-md p-4 cursor-pointer"
-                     onclick="openNotification(${notif.id})">
+            container.innerHTML = notifications.map(notif => {
+                const actionDataStr = JSON.stringify(notif.action_data || {}).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                return `
+                <div class="notification-item ${!notif.is_read ? 'unread' : ''} bg-white rounded-lg shadow-md p-4 cursor-pointer"
+                     onclick="handleNotificationClick(${notif.id}, '${notif.action_url || ''}')">
                     <div class="flex items-start gap-4">
-                        <div class="flex-shrink-0">
-                            ${getNotificationIcon(notif.type)}
-                        </div>
+                        ${getNotificationIcon(notif.type)}
                         <div class="flex-1 min-w-0">
                             <div class="flex items-start justify-between gap-2">
-                                <h3 class="font-semibold ${!notif.read ? 'text-gray-900' : 'text-gray-700'}">${notif.title}</h3>
-                                ${!notif.read ? '<span class="flex-shrink-0 w-2 h-2 rounded-full" style="background-color: var(--terracotta);"></span>' : ''}
-                            </div>
-                            <p class="text-sm text-gray-600 mt-1">${notif.message}</p>
-                            <div class="flex items-center gap-4 mt-2">
-                                <span class="text-xs text-gray-500">${formatTime(notif.time)}</span>
-                                ${notif.action ? `<button onclick="event.stopPropagation(); navigateToAction('${notif.action}')" class="text-xs font-medium hover:underline" style="color: var(--sage-green);">View</button>` : ''}
+                                <div class="flex-1">
+                                    <h4 class="font-semibold" style="color: var(--deep-charcoal);">${escapeHtml(notif.title)}</h4>
+                                    <p class="text-gray-600 text-sm mt-1">${escapeHtml(notif.message || '')}</p>
+                                    ${notif.from_full_name || notif.from_username ? `
+                                        <div class="flex items-center gap-2 mt-2">
+                                            ${notif.from_profile_image 
+                                                ? `<img src="${notif.from_profile_image}" alt="" class="w-6 h-6 rounded-full object-cover">`
+                                                : `<div class="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold" style="background: linear-gradient(135deg, var(--sage-green), var(--terracotta));">${(notif.from_full_name || notif.from_username || 'U')[0].toUpperCase()}</div>`
+                                            }
+                                            <span class="text-sm text-gray-500">${escapeHtml(notif.from_full_name || notif.from_username)}</span>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                                <div class="flex items-center gap-2 flex-shrink-0">
+                                    <span class="text-xs text-gray-400 whitespace-nowrap">${formatTime(notif.created_at)}</span>
+                                    <button onclick="event.stopPropagation(); deleteNotification(${notif.id})" 
+                                            class="p-1 text-gray-400 hover:text-red-500 transition">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                        <button onclick="event.stopPropagation(); deleteNotification(${notif.id})" 
-                                class="text-gray-400 hover:text-red-600 transition p-1">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                        </button>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         // Get notification icon based on type
         function getNotificationIcon(type) {
             const icons = {
-                meal: `<div class="p-2 rounded-full" style="background-color: rgba(74, 124, 89, 0.1);">
+                review: `<div class="p-2 rounded-full flex-shrink-0" style="background-color: rgba(224, 122, 95, 0.1);">
+                    <svg class="w-6 h-6" style="color: var(--terracotta);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                    </svg>
+                </div>`,
+                meal: `<div class="p-2 rounded-full flex-shrink-0" style="background-color: rgba(74, 124, 89, 0.1);">
                     <svg class="w-6 h-6" style="color: var(--sage-green);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                 </div>`,
-                shopping: `<div class="p-2 rounded-full" style="background-color: rgba(224, 122, 95, 0.1);">
+                shopping: `<div class="p-2 rounded-full flex-shrink-0" style="background-color: rgba(224, 122, 95, 0.1);">
                     <svg class="w-6 h-6" style="color: var(--terracotta);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
                     </svg>
                 </div>`,
-                recipe: `<div class="p-2 rounded-full" style="background-color: rgba(74, 124, 89, 0.1);">
+                recipe: `<div class="p-2 rounded-full flex-shrink-0" style="background-color: rgba(74, 124, 89, 0.1);">
                     <svg class="w-6 h-6" style="color: var(--sage-green);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                     </svg>
+                </div>`,
+                info: `<div class="p-2 rounded-full flex-shrink-0" style="background-color: rgba(74, 124, 89, 0.1);">
+                    <svg class="w-6 h-6" style="color: var(--sage-green);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
                 </div>`
             };
-            return icons[type] || icons.meal;
+            return icons[type] || icons.info;
         }
 
         // Format time
-        function formatTime(date) {
+        function formatTime(dateString) {
+            const date = new Date(dateString);
             const now = new Date();
             const diff = now - date;
             const minutes = Math.floor(diff / 60000);
@@ -662,164 +1117,183 @@
             return date.toLocaleDateString();
         }
 
+        // Escape HTML
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
         // Filter notifications
         function filterNotifications(filter) {
             currentFilter = filter;
             
             // Update button styles
             document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
                 btn.style.backgroundColor = '#f3f4f6';
                 btn.style.color = '#374151';
             });
             
             const activeBtn = document.getElementById(`filter-${filter}`);
-            activeBtn.style.backgroundColor = 'var(--sage-green)';
-            activeBtn.style.color = 'white';
+            activeBtn.classList.add('active');
             
-            renderNotifications();
+            loadNotifications();
         }
 
-        // Open notification
-        function openNotification(id) {
-            const notif = notifications.find(n => n.id === id);
-            if (notif && !notif.read) {
-                notif.read = true;
+        // Handle notification click
+        async function handleNotificationClick(id, actionUrl) {
+            // Mark as read
+            try {
+                await fetch(`/notifications/api/${id}/read`, { method: 'PUT' });
+                
+                // Update local state
+                const notif = notifications.find(n => n.id === id);
+                if (notif) notif.is_read = true;
+                
                 renderNotifications();
-                updateStats();
-                updateNavBadge();
+                loadStats();
+            } catch (error) {
+                console.error('Error marking notification as read:', error);
+            }
+
+            // Navigate to action URL if provided
+            if (actionUrl) {
+                window.location.href = actionUrl;
             }
         }
 
         // Delete notification
-        function deleteNotification(id) {
-            notifications = notifications.filter(n => n.id !== id);
-            renderNotifications();
-            updateStats();
-            updateNavBadge();
-        }
-
-        // Navigate to action
-        function navigateToAction(url) {
-            window.location.href = url;
-        }
-
-        // Update statistics
-        function updateStats() {
-            const total = notifications.length;
-            const unread = notifications.filter(n => !n.read).length;
-            const today = notifications.filter(n => {
-                const now = new Date();
-                return n.time.toDateString() === now.toDateString() && n.type === 'meal';
-            }).length;
-
-            document.getElementById('totalNotifications').textContent = total;
-            document.getElementById('unreadCount').textContent = unread;
-            document.getElementById('todayReminders').textContent = today;
-        }
-
-        // Update nav badge
-        function updateNavBadge() {
-            const unread = notifications.filter(n => !n.read).length;
-            const badge = document.getElementById('navBadge');
-            
-            if (unread > 0) {
-                badge.textContent = unread;
-                badge.classList.remove('hidden');
-            } else {
-                badge.classList.add('hidden');
+        async function deleteNotification(id) {
+            try {
+                await fetch(`/notifications/api/${id}`, { method: 'DELETE' });
+                notifications = notifications.filter(n => n.id !== id);
+                renderNotifications();
+                loadStats();
+                showToast('Notification deleted', 'success');
+            } catch (error) {
+                console.error('Error deleting notification:', error);
+                showToast('Failed to delete notification', 'error');
             }
-        }
-
-        // Toggle notification dropdown
-        function toggleNotificationDropdown() {
-            const dropdown = document.getElementById('notificationDropdown');
-            dropdown.classList.toggle('hidden');
-            
-            if (!dropdown.classList.contains('hidden')) {
-                updateDropdownNotifications();
-            }
-        }
-
-        // Update dropdown notifications
-        function updateDropdownNotifications() {
-            const container = document.getElementById('dropdownNotifications');
-            const recent = notifications.slice(0, 5);
-            
-            if (recent.length === 0) {
-                container.innerHTML = '<div class="p-4 text-center text-gray-500 text-sm">No notifications</div>';
-                return;
-            }
-
-            container.innerHTML = recent.map(notif => `
-                <div class="p-3 hover:bg-gray-50 cursor-pointer ${!notif.read ? 'bg-green-50' : ''}"
-                     onclick="openNotification(${notif.id}); toggleNotificationDropdown();">
-                    <div class="flex items-start gap-2">
-                        <div class="text-sm flex-1">
-                            <p class="font-medium text-gray-900">${notif.title}</p>
-                            <p class="text-gray-600 text-xs mt-1">${notif.message}</p>
-                            <p class="text-gray-500 text-xs mt-1">${formatTime(notif.time)}</p>
-                        </div>
-                        ${!notif.read ? '<span class="flex-shrink-0 w-2 h-2 rounded-full mt-1" style="background-color: var(--terracotta);"></span>' : ''}
-                    </div>
-                </div>
-            `).join('');
         }
 
         // Mark all as read
-        function markAllAsRead() {
-            notifications.forEach(n => n.read = true);
-            renderNotifications();
-            updateStats();
-            updateNavBadge();
-            updateDropdownNotifications();
+        async function markAllAsRead() {
+            try {
+                await fetch('/notifications/api/read-all', { method: 'PUT' });
+                notifications.forEach(n => n.is_read = true);
+                renderNotifications();
+                loadStats();
+                showToast('All notifications marked as read', 'success');
+            } catch (error) {
+                console.error('Error marking all as read:', error);
+                showToast('Failed to mark notifications as read', 'error');
+            }
+        }
+
+        // Update GMT+6 time display
+        function updateGMT6TimeDisplay() {
+            const gmt6 = getGMT6Time();
+            const timeStr = `${String(gmt6.getHours()).padStart(2, '0')}:${String(gmt6.getMinutes()).padStart(2, '0')}:${String(gmt6.getSeconds()).padStart(2, '0')}`;
+            const timeEl = document.getElementById('currentGMT6Time');
+            if (timeEl) {
+                timeEl.textContent = timeStr;
+            }
         }
 
         // Show settings modal
         function showSettingsModal() {
             document.getElementById('settingsModal').classList.remove('hidden');
+            updateGMT6TimeDisplay();
+            // Update time every second while modal is open
+            window.gmt6TimeInterval = setInterval(updateGMT6TimeDisplay, 1000);
         }
 
         // Close settings modal
         function closeSettingsModal() {
             document.getElementById('settingsModal').classList.add('hidden');
+            if (window.gmt6TimeInterval) {
+                clearInterval(window.gmt6TimeInterval);
+            }
         }
 
         // Save settings
-        function saveSettings() {
-            const settings = {
-                enabled: document.getElementById('enableReminders').checked,
-                breakfast: document.getElementById('breakfastReminder').value,
-                lunch: document.getElementById('lunchReminder').value,
-                dinner: document.getElementById('dinnerReminder').value,
-                snack: document.getElementById('snackReminder').value,
-                weeklyPlan: document.getElementById('notifyWeeklyPlan').checked,
-                shoppingList: document.getElementById('notifyShoppingList').checked,
-                newRecipes: document.getElementById('notifyNewRecipes').checked,
-                calorieGoal: document.getElementById('notifyCalorieGoal').checked,
-                sound: document.getElementById('enableSound').checked
+        async function saveSettings() {
+            const settingsData = {
+                reminders_enabled: document.getElementById('enableReminders').checked,
+                breakfast_time: document.getElementById('breakfastTime').value,
+                lunch_time: document.getElementById('lunchTime').value,
+                dinner_time: document.getElementById('dinnerTime').value,
+                snack_time: document.getElementById('snackTime').value,
+                breakfast_reminder_minutes: parseInt(document.getElementById('breakfastReminder').value),
+                lunch_reminder_minutes: parseInt(document.getElementById('lunchReminder').value),
+                dinner_reminder_minutes: parseInt(document.getElementById('dinnerReminder').value),
+                snack_reminder_minutes: parseInt(document.getElementById('snackReminder').value),
+                notify_weekly_plan: document.getElementById('notifyWeeklyPlan').checked,
+                notify_shopping_list: document.getElementById('notifyShoppingList').checked,
+                notify_new_recipes: document.getElementById('notifyNewRecipes').checked,
+                notify_calorie_goal: document.getElementById('notifyCalorieGoal').checked,
+                sound_enabled: document.getElementById('enableSound').checked
             };
 
-            // Save to localStorage
-            localStorage.setItem('notificationSettings', JSON.stringify(settings));
-            
-            // Show success toast
-            showToast('Settings saved successfully!', 'success');
-            closeSettingsModal();
+            try {
+                const response = await fetch('/notifications/api/settings', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settingsData)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast('Settings saved successfully!', 'success');
+                    closeSettingsModal();
+                    
+                    // Update local settings object
+                    settings = settingsData;
+                    
+                    // Save to localStorage for client-side reminder scheduling
+                    localStorage.setItem('mealReminderSettings', JSON.stringify(settingsData));
+                    
+                    // Clear today's triggered reminders so new times can trigger
+                    triggeredReminders.clear();
+                    saveTriggeredReminders();
+                    
+                    // Notify global MealReminders service to reload settings
+                    if (window.MealReminders && window.MealReminders.reload) {
+                        window.MealReminders.reload();
+                        console.log('Notified MealReminders service to reload settings');
+                    }
+                } else {
+                    showToast('Failed to save settings', 'error');
+                }
+            } catch (error) {
+                console.error('Error saving settings:', error);
+                showToast('Failed to save settings', 'error');
+            }
         }
 
         // Show toast notification
         function showToast(message, type = 'info') {
             const toast = document.createElement('div');
             toast.className = 'toast-notification bg-white rounded-lg shadow-2xl p-4 flex items-center gap-3 border-l-4';
-            toast.style.borderColor = type === 'success' ? 'var(--sage-green)' : 'var(--terracotta)';
+            toast.style.borderColor = type === 'success' ? 'var(--sage-green)' : type === 'error' ? '#ef4444' : 'var(--terracotta)';
+            
+            const iconColor = type === 'success' ? 'var(--sage-green)' : type === 'error' ? '#ef4444' : 'var(--terracotta)';
+            const icon = type === 'success' 
+                ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>'
+                : type === 'error'
+                ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>'
+                : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>';
             
             toast.innerHTML = `
                 <div class="flex-shrink-0">
-                    <svg class="w-6 h-6" style="color: ${type === 'success' ? 'var(--sage-green)' : 'var(--terracotta)'};" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${type === 'success' ? 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' : 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9'}"></path>
+                    <svg class="w-6 h-6" style="color: ${iconColor};" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        ${icon}
                     </svg>
                 </div>
-                <p class="flex-1 font-medium text-gray-900">${message}</p>
+                <p class="flex-1 font-medium text-gray-900">${escapeHtml(message)}</p>
                 <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-600">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -835,46 +1309,17 @@
             }, 3000);
         }
 
-        // Simulate meal reminder
-        function simulateMealReminder() {
-            const newNotif = {
-                id: notificationIdCounter++,
-                type: 'meal',
-                title: 'Dinner Reminder',
-                message: 'Time to start preparing Grilled Chicken Salad',
-                time: new Date(),
-                read: false,
-                action: 'recipe.html'
-            };
-            
-            notifications.unshift(newNotif);
-            renderNotifications();
-            updateStats();
-            updateNavBadge();
-            showToast('New meal reminder: Dinner time!', 'info');
-        }
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function(event) {
-            const dropdown = document.getElementById('notificationDropdown');
-            const button = event.target.closest('button');
-            
-            if (!dropdown.contains(event.target) && (!button || !button.onclick || button.onclick.toString().indexOf('toggleNotificationDropdown') === -1)) {
-                dropdown.classList.add('hidden');
-            }
-        });
-
         // Close settings modal when clicking outside
         document.getElementById('settingsModal').addEventListener('click', function(e) {
             if (e.target === this) closeSettingsModal();
         });
 
-        // Initialize
-        initializeNotifications();
-
-        // Simulate a new reminder after 10 seconds (for demonstration)
-        setTimeout(simulateMealReminder, 10000);
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (pollingInterval) clearInterval(pollingInterval);
+            if (reminderCheckInterval) clearInterval(reminderCheckInterval);
+        });
     </script>
-    </div>
+    <script src="/static/js/meal-reminders.js"></script>
 </body>
 </html>

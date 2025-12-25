@@ -204,7 +204,7 @@
             <span class="sidebar-label">Home</span>
         </a>
         
-        <a href="{{ url_for('profile.dashboard') }}" class="sidebar-item">
+        <a href="{{ url_for('dashboard.dashboard') }}" class="sidebar-item">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 12a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1v-7z"></path>
             </svg>
@@ -424,6 +424,25 @@
                     <h3 class="text-xl font-bold mb-2" style="color: var(--deep-charcoal);">{{ recipe.title }}</h3>
                     <p class="text-gray-600 text-sm mb-2">{{ recipe.description or 'No description provided' }}</p>
                     
+                    {% if recipe.forked_from_id %}
+                    <div class="mb-2 flex items-center gap-2 text-sm">
+                        <svg class="w-4 h-4" style="color: var(--terracotta);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                        </svg>
+                        <span style="color: var(--terracotta);">Inspired by</span>
+                        {% if recipe.original_is_public %}
+                        <a href="{{ url_for('recipes.recipes') }}?view={{ recipe.forked_from_id }}" 
+                           class="font-medium hover:underline" style="color: var(--sage-green);">
+                            {{ recipe.original_title or 'Original Recipe' }}
+                        </a>
+                        {% else %}
+                        <span class="font-medium" style="color: var(--deep-charcoal);">{{ recipe.original_title or 'Original Recipe' }}</span>
+                        {% endif %}
+                        <span class="text-gray-400">by</span>
+                        <span class="font-medium" style="color: var(--deep-charcoal);">{{ recipe.original_author_name or recipe.original_author_username or 'Unknown' }}</span>
+                    </div>
+                    {% endif %}
+                    
                     {% if recipe.tags %}
                     <div class="flex flex-wrap gap-1 mb-3">
                         {% for tag in recipe.tags.split(',') %}
@@ -481,7 +500,7 @@
     </div>
 
     <!-- Rating Modal -->
-    <div id="ratingModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div id="ratingModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
         <div class="bg-white rounded-lg max-w-md w-full p-6">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-2xl font-bold" style="color: var(--deep-charcoal);">Rate Recipe</h2>
@@ -577,6 +596,15 @@
                     </button>
                 </div>
                 <p id="viewDescription" class="text-gray-600"></p>
+                <div id="viewInspiredBy" class="hidden mt-3 flex items-center gap-2 text-sm">
+                    <svg class="w-4 h-4" style="color: var(--terracotta);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                    </svg>
+                    <span style="color: var(--terracotta);">Inspired by</span>
+                    <a id="viewOriginalLink" href="#" class="font-medium hover:underline" style="color: var(--sage-green);"></a>
+                    <span class="text-gray-400">by</span>
+                    <span id="viewOriginalAuthor" class="font-medium" style="color: var(--deep-charcoal);"></span>
+                </div>
             </div>
 
             <div class="p-6 space-y-6">
@@ -627,12 +655,21 @@
                 </div>
 
                 <!-- Actions -->
-                <div class="flex gap-3 pt-4 border-t border-gray-200">
-                    <button onclick="forkRecipe(currentRecipeId)" 
+                <div class="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
+                    <a id="cookNowBtn" href="#" 
+                       class="px-6 py-3 rounded-lg text-white font-medium hover:opacity-90 transition flex items-center gap-2"
+                       style="background-color: var(--sage-green);">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path>
+                        </svg>
+                        Cook Now
+                    </a>
+                    <button id="forkRecipeBtn" onclick="forkRecipe(currentRecipeId)" 
                             class="px-6 py-3 rounded-lg text-white font-medium hover:opacity-90 transition"
                             style="background-color: var(--terracotta);">
                         <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
                         </svg>
                         Fork to My Recipes
                     </button>
@@ -832,17 +869,52 @@
             }
         }
 
-        // Initialize results count on page load
+        // Initialize results count on page load and check for URL parameters
         document.addEventListener('DOMContentLoaded', function() {
             const totalCards = document.querySelectorAll('.recipe-card').length;
             updateResultsCount(totalCards);
+            
+            // Check if we should open a specific recipe (from notification link)
+            const urlParams = new URLSearchParams(window.location.search);
+            const viewRecipeId = urlParams.get('view');
+            if (viewRecipeId) {
+                // Open the recipe modal after a short delay to ensure page is ready
+                setTimeout(() => {
+                    viewRecipe(parseInt(viewRecipeId));
+                }, 100);
+            }
         });
 
-        function forkRecipe(recipeId) {
-            const recipe = recipes[recipeId];
-            if (confirm(`Fork "${recipe.title}" by ${recipe.author} to your recipes? You'll be able to customize it!`)) {
-                alert(`Recipe forked successfully! Check "My Recipes" to customize it.`);
-                // In real app, would save to user's recipes with fork reference
+        async function forkRecipe(recipeId) {
+            const recipeCard = document.querySelector(`.recipe-card[data-recipe-id="${recipeId}"]`);
+            const recipeTitle = recipeCard ? recipeCard.querySelector('h3')?.textContent : 'this recipe';
+            
+            if (!confirm(`Fork "${recipeTitle}" to your recipes? It will be saved as a private copy that you can customize.`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/recipes/${recipeId}/fork`, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(data.message);
+                    // Optionally redirect to my recipes
+                    if (confirm('Would you like to view your forked recipe now?')) {
+                        window.location.href = '{{ url_for("recipes.my_recipes") }}';
+                    }
+                } else {
+                    alert(data.message || 'Failed to fork recipe');
+                }
+            } catch (error) {
+                console.error('Error forking recipe:', error);
+                alert('An error occurred while forking the recipe. Please try again.');
             }
         }
 
@@ -1087,11 +1159,17 @@
             
             // Show/hide "Write a Review" button based on ownership
             const writeReviewBtn = document.getElementById('writeReviewBtn');
+            const forkBtn = document.getElementById('forkRecipeBtn');
             if (recipe.user_id === currentUserId) {
                 writeReviewBtn.classList.add('hidden');
+                forkBtn.classList.add('hidden');
             } else {
                 writeReviewBtn.classList.remove('hidden');
+                forkBtn.classList.remove('hidden');
             }
+            
+            // Set Cook Now button link
+            document.getElementById('cookNowBtn').href = `/cook/${recipe.id}`;
             
             // Show recipe image if available
             const imageContainer = document.getElementById('viewImageContainer');
@@ -1106,6 +1184,29 @@
             
             document.getElementById('viewTitle').textContent = recipe.title;
             document.getElementById('viewDescription').textContent = recipe.description || 'No description provided';
+            
+            // Show/hide Inspired By section
+            const inspiredBySection = document.getElementById('viewInspiredBy');
+            if (recipe.forked_from_id) {
+                inspiredBySection.classList.remove('hidden');
+                const originalLink = document.getElementById('viewOriginalLink');
+                const originalAuthor = document.getElementById('viewOriginalAuthor');
+                
+                if (recipe.original_is_public) {
+                    originalLink.href = `/recipes?view=${recipe.forked_from_id}`;
+                    originalLink.textContent = recipe.original_title || 'Original Recipe';
+                    originalLink.style.pointerEvents = 'auto';
+                    originalLink.style.color = 'var(--sage-green)';
+                } else {
+                    originalLink.href = '#';
+                    originalLink.textContent = recipe.original_title || 'Original Recipe';
+                    originalLink.style.pointerEvents = 'none';
+                    originalLink.style.color = 'var(--deep-charcoal)';
+                }
+                originalAuthor.textContent = recipe.original_author_name || recipe.original_author_username || 'Unknown';
+            } else {
+                inspiredBySection.classList.add('hidden');
+            }
             
             const totalTime = (recipe.prep_time || 0) + (recipe.cook_time || 0);
             if (totalTime > 0) {
@@ -1233,6 +1334,7 @@
             return div.innerHTML;
         }
     </script>
+    <script src="/static/js/meal-reminders.js"></script>
     </div>
 </body>
 </html>
