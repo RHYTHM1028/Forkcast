@@ -261,6 +261,76 @@ def delete_calendar_slot(week_start):
     return jsonify({'success': True})
 
 
+@calendar_bp.route('/api/remove-recipe', methods=['POST'])
+@login_required
+def remove_recipe_from_calendar():
+    """Delete a specific recipe from today's meal slot."""
+    from datetime import date, timedelta
+    
+    data = request.get_json()
+    user_id = session['user_id']
+    recipe_id = data.get('recipe_id')
+    meal_type = data.get('meal_type', '').lower()  # breakfast, lunch, dinner, snack
+    target_date_str = data.get('date')  # Optional: specify date, defaults to today
+    
+    if not recipe_id or not meal_type:
+        return jsonify({'error': 'recipe_id and meal_type are required'}), 400
+    
+    # Parse target date or use today
+    if target_date_str:
+        target_date = date.fromisoformat(target_date_str)
+    else:
+        target_date = date.today()
+    
+    with get_db_cursor(commit=True) as cur:
+        # Find all weeks for this user and check which one contains the target date
+        cur.execute('''
+            SELECT week_start_date, meals FROM weekly_calendar_data 
+            WHERE user_id = %s
+            ORDER BY week_start_date DESC
+        ''', (user_id,))
+        all_weeks = cur.fetchall()
+        
+        for week in all_weeks:
+            week_start = week['week_start_date']
+            week_end = week_start + timedelta(days=6)
+            
+            # Check if target date falls within this week
+            if week_start <= target_date <= week_end:
+                meals = week['meals']
+                if not meals:
+                    continue
+                
+                # Calculate day index (0=Sunday for the week)
+                # Python weekday(): 0=Monday, 6=Sunday
+                # Convert to: 0=Sunday, 6=Saturday using (weekday + 1) % 7
+                day_index = (target_date.weekday() + 1) % 7
+                slot_key = f"{day_index}-{meal_type}"
+                
+                if slot_key in meals and isinstance(meals[slot_key], list):
+                    # Remove the specific recipe from the array
+                    original_length = len(meals[slot_key])
+                    meals[slot_key] = [meal for meal in meals[slot_key] 
+                                       if meal.get('recipeId') != recipe_id]
+                    
+                    # Check if anything was removed
+                    if len(meals[slot_key]) < original_length:
+                        # If the array is now empty, remove the slot entirely
+                        if len(meals[slot_key]) == 0:
+                            del meals[slot_key]
+                        
+                        # Update the database
+                        cur.execute('''
+                            UPDATE weekly_calendar_data 
+                            SET meals = %s, updated_at = CURRENT_TIMESTAMP
+                            WHERE user_id = %s AND week_start_date = %s
+                        ''', (json.dumps(meals), user_id, week_start))
+                        
+                        return jsonify({'success': True, 'message': 'Recipe removed from calendar'})
+    
+    return jsonify({'success': False, 'error': 'Recipe not found in calendar'})
+
+
 @calendar_bp.route('/api/all-weeks', methods=['GET'])
 @login_required
 def get_all_weeks_calendar():

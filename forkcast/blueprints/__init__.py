@@ -25,6 +25,7 @@ from .calendar import calendar_bp
 from .calorie_tracker import calorie_tracker_bp
 from .shopping_list import shopping_list_bp
 from .notifications import notifications_bp
+from .dashboard import dashboard_bp
 
 __all__ = [
     'main_bp',
@@ -35,5 +36,6 @@ __all__ = [
     'calendar_bp',
     'calorie_tracker_bp',
     'shopping_list_bp',
-    'notifications_bp'
+    'notifications_bp',
+    'dashboard_bp'
 ]

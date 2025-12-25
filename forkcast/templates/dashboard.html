@@ -166,19 +166,17 @@
             top: 0;
             height: 100vh;
             width: 70px;
-            background: rgba(74, 124, 89, 0.7);
+            background: rgba(74, 124, 89, 0.95);
             backdrop-filter: blur(20px) saturate(180%);
             -webkit-backdrop-filter: blur(20px) saturate(180%);
             border-right: 1px solid rgba(255, 255, 255, 0.18);
             transition: width 0.3s ease;
             z-index: 1000;
             overflow: hidden;
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
         }
 
         .sidebar:hover {
             width: 250px;
-            background: rgba(74, 124, 89, 0.8);
         }
 
         .sidebar-item {
@@ -298,7 +296,7 @@
             <span class="sidebar-label">Home</span>
         </a>
         
-        <a href="{{ url_for('profile.dashboard') }}" class="sidebar-item active">
+        <a href="{{ url_for('dashboard.dashboard') }}" class="sidebar-item active">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 12a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1v-7z"></path>
             </svg>
@@ -394,8 +392,8 @@
                     </div>
                     <span class="text-sm font-medium text-gray-500">Today</span>
                 </div>
-                <h3 class="text-3xl font-bold mb-1" style="color: var(--deep-charcoal);" id="todayCaloriesValue">1,450</h3>
-                <p class="text-sm text-gray-600">of 2,000 cal goal</p>
+                <h3 class="text-3xl font-bold mb-1" style="color: var(--deep-charcoal);" id="todayCaloriesValue">...</h3>
+                <p class="text-sm text-gray-600" id="todayCaloriesGoal">Loading...</p>
                 <div class="mt-3 w-full bg-gray-200 rounded-full h-2">
                     <div class="h-2 rounded-full" style="background-color: var(--sage-green); width: 72.5%;"></div>
                 </div>
@@ -411,9 +409,8 @@
                     </div>
                     <span class="text-sm font-medium text-gray-500">This Week</span>
                 </div>
-                <h3 class="text-3xl font-bold mb-1" style="color: var(--deep-charcoal);" id="weeklyMealsValue">18</h3>
-                <p class="text-sm text-gray-600">meals planned</p>
-                <p class="text-xs text-green-600 mt-2">↑ 3 more than last week</p>
+                <h3 class="text-3xl font-bold mb-1" style="color: var(--deep-charcoal);" id="weeklyMealsValue">...</h3>
+                <p class="text-sm text-gray-600">meals planned this week</p>
             </div>
 
             <!-- Saved Recipes -->
@@ -426,24 +423,8 @@
                     </div>
                     <span class="text-sm font-medium text-gray-500">Library</span>
                 </div>
-                <h3 class="text-3xl font-bold mb-1" style="color: var(--deep-charcoal);" id="savedRecipesValue">42</h3>
-                <p class="text-sm text-gray-600">saved recipes</p>
-                <p class="text-xs text-blue-600 mt-2">5 new this month</p>
-            </div>
-
-            <!-- Streak -->
-            <div id="stat-planningStreak" class="stat-card bg-white rounded-lg shadow-md p-6" data-widget="planningStreak">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="p-3 rounded-full" style="background-color: rgba(224, 122, 95, 0.1);">
-                        <svg class="w-6 h-6" style="color: var(--terracotta);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
-                        </svg>
-                    </div>
-                    <span class="text-sm font-medium text-gray-500">Streak</span>
-                </div>
-                <h3 class="text-3xl font-bold mb-1" style="color: var(--deep-charcoal);" id="planningStreakValue">12</h3>
-                <p class="text-sm text-gray-600">days logging meals</p>
-                <p class="text-xs text-green-600 mt-2">🔥 Keep it up!</p>
+                <h3 class="text-3xl font-bold mb-1" style="color: var(--deep-charcoal);" id="savedRecipesValue">...</h3>
+                <p class="text-sm text-gray-600">in your collection</p>
             </div>
         </div>
 
@@ -500,7 +481,7 @@
 
                 <div class="border-t pt-4">
                     <h3 class="text-sm font-semibold text-gray-700 mb-3">Weekly Calorie Trend</h3>
-                    <div class="flex items-end justify-between gap-2 h-32">
+                    <div id="weeklyTrendChart" class="flex items-end justify-between gap-2 h-32">
                         <div class="flex-1 flex flex-col items-center">
                             <div class="w-full bg-gray-200 rounded-t flex flex-col justify-end" style="height: 100%;">
                                 <div class="chart-bar w-full rounded-t" style="background-color: var(--sage-green); height: 75%;"></div>
@@ -595,28 +576,7 @@
                 <a href="{{ url_for('calorie_tracker.calorie_tracker') }}" class="block mt-4 text-center text-sm font-medium hover:underline" style="color: var(--sage-green);">View All Meals →</a>
             </div>
 
-            <!-- Upcoming Meals Widget -->
-            <div id="upcomingMealsWidget" class="widget-card bg-white rounded-lg shadow-md p-6">
-                <h2 class="text-xl font-bold mb-4" style="color: var(--deep-charcoal);">Upcoming Meals</h2>
-                <div class="space-y-4">
-                    <div class="border-l-4 pl-3" style="border-color: var(--sage-green);">
-                        <p class="text-xs text-gray-500 mb-1">Tomorrow • Breakfast</p>
-                        <p class="font-semibold">Greek Yogurt Bowl</p>
-                        <p class="text-sm text-gray-600">320 cal • 25g protein</p>
-                    </div>
-                    <div class="border-l-4 pl-3" style="border-color: var(--terracotta);">
-                        <p class="text-xs text-gray-500 mb-1">Tomorrow • Lunch</p>
-                        <p class="font-semibold">Turkey Sandwich</p>
-                        <p class="text-sm text-gray-600">450 cal • 30g protein</p>
-                    </div>
-                    <div class="border-l-4 pl-3" style="border-color: var(--sage-green);">
-                        <p class="text-xs text-gray-500 mb-1">Tomorrow • Dinner</p>
-                        <p class="font-semibold">Salmon with Veggies</p>
-                        <p class="text-sm text-gray-600">520 cal • 42g protein</p>
-                    </div>
-                </div>
-                <a href="{{ url_for('calendar.calendar') }}" class="block mt-4 text-center text-sm font-medium hover:underline" style="color: var(--sage-green);">View Meal Plan →</a>
-            </div>
+
 
             <!-- Goals Progress Widget -->
             <div id="goalsWidget" class="widget-card bg-white rounded-lg shadow-md p-6">
@@ -770,25 +730,7 @@
                                 </label>
                             </div>
                         </div>
-                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                            <div class="flex items-center gap-3">
-                                <svg class="w-5 h-5" style="color: var(--terracotta);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
-                                </svg>
-                                <span class="font-medium">Planning Streak</span>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <select class="size-select px-2 py-1 border border-gray-300 rounded text-sm" onchange="changeWidgetSize('planningStreak', this.value)">
-                                    <option value="small">Small</option>
-                                    <option value="medium" selected>Medium</option>
-                                    <option value="large">Large</option>
-                                </select>
-                                <label class="toggle-switch">
-                                    <input type="checkbox" checked onchange="toggleWidget('planningStreak')">
-                                    <span class="toggle-slider"></span>
-                                </label>
-                            </div>
-                        </div>
+
                     </div>
                 </div>
 
@@ -824,20 +766,7 @@
                                 </label>
                             </div>
                         </div>
-                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                            <span class="font-medium">Upcoming Meals</span>
-                            <div class="flex items-center gap-3">
-                                <select class="size-select px-2 py-1 border border-gray-300 rounded text-sm" onchange="changeWidgetSize('upcomingMealsWidget', this.value)">
-                                    <option value="small">Small</option>
-                                    <option value="medium" selected>Medium</option>
-                                    <option value="large">Large</option>
-                                </select>
-                                <label class="toggle-switch">
-                                    <input type="checkbox" checked onchange="toggleWidget('upcomingMealsWidget')">
-                                    <span class="toggle-slider"></span>
-                                </label>
-                            </div>
-                        </div>
+
                         <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                             <span class="font-medium">Goals Progress</span>
                             <div class="flex items-center gap-3">
@@ -883,15 +812,230 @@
     </div>
 
     <script>
+        // Load dashboard data on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboardData();
+        });
+
+        // Load all dashboard data from backend
+        async function loadDashboardData() {
+            try {
+                await Promise.all([
+                    loadDashboardStats(),
+                    loadNutritionOverview('today'),
+                    loadRecentMeals(),
+                    loadWeeklyTrend(),
+                    loadGoalsProgress()
+                ]);
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                // If there's an authentication error, the page will be redirected by Flask
+                if (error.message && error.message.includes('401')) {
+                    window.location.href = '/login';
+                }
+            }
+        }
+
+        // Load dashboard statistics
+        async function loadDashboardStats() {
+            try {
+                const response = await fetch('/api/dashboard/stats');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update today's calories
+                    document.getElementById('todayCaloriesValue').textContent = data.today_calories.toLocaleString();
+                    const calorieProgress = (data.today_calories / data.calorie_goal) * 100;
+                    document.querySelector('#stat-todayCalories .h-2.rounded-full').style.width = Math.min(100, calorieProgress) + '%';
+                    document.getElementById('todayCaloriesGoal').textContent = 
+                        `of ${data.calorie_goal.toLocaleString()} cal goal`;
+                    
+                    // Update weekly meals
+                    document.getElementById('weeklyMealsValue').textContent = data.weekly_meals;
+                    
+                    // Update saved recipes
+                    document.getElementById('savedRecipesValue').textContent = data.saved_recipes;
+                }
+            } catch (error) {
+                console.error('Error loading dashboard stats:', error);
+                if (error.message.includes('401') || error.message.includes('302')) {
+                    window.location.href = '/login';
+                }
+            }
+        }
+
+        // Load nutrition overview
+        async function loadNutritionOverview(period = 'today') {
+            try {
+                const response = await fetch(`/api/dashboard/nutrition-overview?period=${period}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                
+                if (data.success) {
+                    const circumference = 2 * Math.PI * 40; // radius = 40
+                    
+                    // Update protein
+                    const proteinPercent = Math.min(100, (data.protein.actual / data.protein.goal) * 100);
+                    const proteinOffset = circumference - (proteinPercent / 100) * circumference;
+                    document.getElementById('proteinCircle').style.strokeDashoffset = proteinOffset;
+                    document.getElementById('proteinPercent').textContent = Math.round(proteinPercent) + '%';
+                    document.getElementById('proteinAmount').textContent = 
+                        `${data.protein.actual}g / ${data.protein.goal}g`;
+                    
+                    // Update carbs
+                    const carbsPercent = Math.min(100, (data.carbs.actual / data.carbs.goal) * 100);
+                    const carbsOffset = circumference - (carbsPercent / 100) * circumference;
+                    document.getElementById('carbsCircle').style.strokeDashoffset = carbsOffset;
+                    document.getElementById('carbsPercent').textContent = Math.round(carbsPercent) + '%';
+                    document.getElementById('carbsAmount').textContent = 
+                        `${data.carbs.actual}g / ${data.carbs.goal}g`;
+                    
+                    // Update fats
+                    const fatsPercent = Math.min(100, (data.fats.actual / data.fats.goal) * 100);
+                    const fatsOffset = circumference - (fatsPercent / 100) * circumference;
+                    document.getElementById('fatsCircle').style.strokeDashoffset = fatsOffset;
+                    document.getElementById('fatsPercent').textContent = Math.round(fatsPercent) + '%';
+                    document.getElementById('fatsAmount').textContent = 
+                        `${data.fats.actual}g / ${data.fats.goal}g`;
+                }
+            } catch (error) {
+                console.error('Error loading nutrition overview:', error);
+                if (error.message.includes('401') || error.message.includes('302')) {
+                    window.location.href = '/login';
+                }
+            }
+        }
+
+        // Load recent meals
+        async function loadRecentMeals() {
+            try {
+                const response = await fetch('/api/dashboard/recent-meals');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                
+                if (data.success && data.meals.length > 0) {
+                    const container = document.querySelector('#recentMealsWidget .space-y-3');
+                    container.innerHTML = '';
+                    
+                    data.meals.forEach(meal => {
+                        const imageUrl = meal.image_url || '/static/images/default-recipe.svg';
+                        
+                        const mealHtml = `
+                            <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                                <img src="${imageUrl}" alt="${meal.title}" class="w-16 h-16 rounded-lg object-cover shadow-sm">
+                                <div class="flex-1">
+                                    <p class="font-semibold text-sm">${meal.title}</p>
+                                    <p class="text-xs text-gray-500">${meal.meal_type} • ${meal.calories} cal</p>
+                                </div>
+                                <span class="text-xs text-gray-400">${meal.date}</span>
+                            </div>
+                        `;
+                        container.insertAdjacentHTML('beforeend', mealHtml);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading recent meals:', error);
+                if (error.message.includes('401') || error.message.includes('302')) {
+                    window.location.href = '/login';
+                }
+            }
+        }
+
+
+
+        // Load weekly trend
+        async function loadWeeklyTrend() {
+            try {
+                const response = await fetch('/api/dashboard/weekly-trend');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                
+                if (data.success) {
+                    const container = document.getElementById('weeklyTrendChart');
+                    container.innerHTML = '';
+                    
+                    data.data.forEach(day => {
+                        const barColor = day.is_today ? 'var(--terracotta)' : 'var(--sage-green)';
+                        
+                        const barHtml = `
+                            <div class="flex-1 flex flex-col items-center" title="${day.calories} calories">
+                                <div class="w-full bg-gray-200 rounded-t flex flex-col justify-end" style="height: 100%;">
+                                    <div class="chart-bar w-full rounded-t" style="background-color: ${barColor}; height: ${day.percentage}%;"></div>
+                                </div>
+                                <span class="text-xs text-gray-500 mt-2">${day.day}</span>
+                            </div>
+                        `;
+                        container.insertAdjacentHTML('beforeend', barHtml);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading weekly trend:', error);
+                if (error.message.includes('401') || error.message.includes('302')) {
+                    window.location.href = '/login';
+                }
+            }
+        }
+
+        // Load goals progress
+        async function loadGoalsProgress() {
+            try {
+                const response = await fetch('/api/dashboard/goals-progress');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                
+                if (data.success) {
+                    const container = document.querySelector('#goalsWidget .space-y-4');
+                    container.innerHTML = '';
+                    
+                    data.goals.forEach(goal => {
+                        const percentage = Math.min(100, (goal.current / goal.target) * 100);
+                        const barColor = percentage >= 75 ? 'var(--sage-green)' : 'var(--terracotta)';
+                        
+                        const goalHtml = `
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm font-medium">${goal.name}</span>
+                                    <span class="text-sm text-gray-500">${goal.current}/${goal.target} ${goal.unit}</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="h-2 rounded-full" style="background-color: ${barColor}; width: ${percentage}%;"></div>
+                                </div>
+                            </div>
+                        `;
+                        container.insertAdjacentHTML('beforeend', goalHtml);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading goals progress:', error);
+                if (error.message.includes('401') || error.message.includes('302')) {
+                    window.location.href = '/login';
+                }
+            }
+        }
+
+        // Handle nutrition period change
+        document.getElementById('nutritionPeriod')?.addEventListener('change', function(e) {
+            loadNutritionOverview(e.target.value);
+        });
+
         // Dashboard settings stored in localStorage
         let dashboardSettings = {
             todayCalories: true,
             weeklyMeals: true,
             savedRecipes: true,
-            planningStreak: true,
             nutritionWidget: true,
             recentMealsWidget: true,
-            upcomingMealsWidget: true,
             goalsWidget: true,
             quickActionsWidget: true
         };
@@ -900,10 +1044,8 @@
             'stat-todayCalories',
             'stat-weeklyMeals', 
             'stat-savedRecipes',
-            'stat-planningStreak',
             'nutritionWidget',
             'recentMealsWidget',
-            'upcomingMealsWidget',
             'goalsWidget',
             'quickActionsWidget'
         ];
@@ -912,10 +1054,8 @@
             todayCalories: 'medium',
             weeklyMeals: 'medium',
             savedRecipes: 'medium',
-            planningStreak: 'medium',
             nutritionWidget: 'medium',
             recentMealsWidget: 'medium',
-            upcomingMealsWidget: 'medium',
             goalsWidget: 'medium',
             quickActionsWidget: 'medium'
         };
@@ -1190,10 +1330,8 @@
                     todayCalories: true,
                     weeklyMeals: true,
                     savedRecipes: true,
-                    planningStreak: true,
                     nutritionWidget: true,
                     recentMealsWidget: true,
-                    upcomingMealsWidget: true,
                     goalsWidget: true,
                     quickActionsWidget: true
                 };
@@ -1202,10 +1340,8 @@
                     'stat-todayCalories',
                     'stat-weeklyMeals', 
                     'stat-savedRecipes',
-                    'stat-planningStreak',
                     'nutritionWidget',
                     'recentMealsWidget',
-                    'upcomingMealsWidget',
                     'goalsWidget',
                     'quickActionsWidget'
                 ];
@@ -1214,10 +1350,8 @@
                     todayCalories: 'medium',
                     weeklyMeals: 'medium',
                     savedRecipes: 'medium',
-                    planningStreak: 'medium',
                     nutritionWidget: 'medium',
                     recentMealsWidget: 'medium',
-                    upcomingMealsWidget: 'medium',
                     goalsWidget: 'medium',
                     quickActionsWidget: 'medium'
                 };
@@ -1262,27 +1396,6 @@
             }, 3000);
         }
 
-        // Notification dropdown functionality
-        function toggleNotificationDropdown() {
-            const dropdown = document.getElementById('notificationDropdown');
-            dropdown.classList.toggle('hidden');
-        }
-
-        function markAllAsRead() {
-            const badge = document.getElementById('navBadge');
-            badge.classList.add('hidden');
-        }
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function(event) {
-            const dropdown = document.getElementById('notificationDropdown');
-            const button = event.target.closest('button');
-            
-            if (!dropdown.contains(event.target) && (!button || !button.onclick || button.onclick.toString().indexOf('toggleNotificationDropdown') === -1)) {
-                dropdown.classList.add('hidden');
-            }
-        });
-
         // Close customize modal when clicking outside
         document.getElementById('customizeModal').addEventListener('click', function(e) {
             if (e.target === this) closeCustomizeModal();
@@ -1291,6 +1404,7 @@
         // Initialize dashboard
         loadDashboardSettings();
     </script>
+    <script src="/static/js/meal-reminders.js"></script>
     </div>
 </body>
 </html>

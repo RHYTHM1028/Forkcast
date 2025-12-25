@@ -52,7 +52,8 @@ def create_app(config_name='default'):
         calendar_bp,
         calorie_tracker_bp,
         shopping_list_bp,
-        notifications_bp
+        notifications_bp,
+        dashboard_bp
     )
     
     # Core blueprints (no prefix)
@@ -69,6 +70,7 @@ def create_app(config_name='default'):
     app.register_blueprint(calorie_tracker_bp)
     app.register_blueprint(shopping_list_bp)
     app.register_blueprint(notifications_bp)
+    app.register_blueprint(dashboard_bp)
     
     # Error handlers
     @app.errorhandler(404)

@@ -199,7 +199,7 @@
             <span class="sidebar-label">Home</span>
         </a>
         
-        <a href="{{ url_for('profile.dashboard') }}" class="sidebar-item">
+        <a href="{{ url_for('dashboard.dashboard') }}" class="sidebar-item">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 12a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1v-7z"></path>
             </svg>
@@ -263,8 +263,58 @@
     <div class="max-w-7xl mx-auto px-4 py-8">
         <!-- Header Section -->
         <div class="mb-6">
-            <h1 class="text-3xl font-bold mb-2" style="color: var(--deep-charcoal);">Calorie Tracker & Nutrition</h1>
-            <p class="text-gray-600">Track your daily calories and adjust serving sizes for optimal nutrition</p>
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold mb-2" style="color: var(--deep-charcoal);">Calorie Tracker & Nutrition</h1>
+                    <p class="text-gray-600">Track your daily calories and adjust serving sizes for optimal nutrition</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="previousDay()" class="p-2 rounded-lg hover:bg-gray-100 transition" style="color: var(--sage-green);">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                    </button>
+                    <input type="date" id="selectedDate" 
+                           class="px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-green-500"
+                           style="border-color: var(--sage-green);" 
+                           onchange="loadSelectedDate()">
+                    <button onclick="nextDay()" class="p-2 rounded-lg hover:bg-gray-100 transition" style="color: var(--sage-green);">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </button>
+                    <button onclick="goToToday()" class="px-4 py-2 rounded-lg text-white font-medium hover:opacity-90 transition"
+                            style="background-color: var(--sage-green);">
+                        Today
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weekly Average Section -->
+        <div class="mb-6 nutrition-card rounded-xl p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold" style="color: var(--deep-charcoal);">Weekly Average</h2>
+                <span id="weekRange" class="text-sm text-gray-600"></span>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="text-center">
+                    <p class="text-2xl font-bold" style="color: var(--sage-green);" id="weekAvgCalories">0</p>
+                    <p class="text-sm text-gray-600">Avg Calories</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-2xl font-bold" style="color: var(--terracotta);" id="weekAvgProtein">0g</p>
+                    <p class="text-sm text-gray-600">Avg Protein</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-2xl font-bold" style="color: #FFA500);" id="weekAvgCarbs">0g</p>
+                    <p class="text-sm text-gray-600">Avg Carbs</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-2xl font-bold" style="color: #9333EA);" id="weekAvgFats">0g</p>
+                    <p class="text-sm text-gray-600">Avg Fats</p>
+                </div>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -296,8 +346,9 @@
                                     r="90"
                                     cx="100"
                                     cy="100"
-                                    stroke-dasharray="565.48"
-                                    stroke-dashoffset="565.48"
+                                    stroke-dasharray="565.4867"
+                                    stroke-dashoffset="565.4867"
+                                    stroke-linecap="round"
                                 />
                             </svg>
                             <div class="absolute inset-0 flex flex-col items-center justify-center">
@@ -319,9 +370,48 @@
                                    value="2000"
                                    min="1000"
                                    max="5000"
-                                   onchange="updateCalorieGoal()"
+                                   onchange="updateGoals()"
                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
                                    style="focus:ring-color: var(--sage-green);">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2" style="color: var(--sage-green);">
+                                Protein Goal (g)
+                            </label>
+                            <input type="number" 
+                                   id="proteinGoal" 
+                                   value="150"
+                                   min="0"
+                                   max="500"
+                                   onchange="updateGoals()"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                                   style="focus:ring-color: var(--sage-green);">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2" style="color: var(--terracotta);">
+                                Carbs Goal (g)
+                            </label>
+                            <input type="number" 
+                                   id="carbsGoal" 
+                                   value="200"
+                                   min="0"
+                                   max="800"
+                                   onchange="updateGoals()"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                                   style="focus:ring-color: var(--terracotta);">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2" style="color: #F59E0B;">
+                                Fats Goal (g)
+                            </label>
+                            <input type="number" 
+                                   id="fatsGoal" 
+                                   value="67"
+                                   min="0"
+                                   max="300"
+                                   onchange="updateGoals()"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                                   style="focus:ring-color: #F59E0B;">
                         </div>
                     </div>
                 </div>
@@ -373,356 +463,308 @@
                 <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
                     <div class="flex items-center justify-between mb-4">
                         <h2 class="text-xl font-bold" style="color: var(--deep-charcoal);">Today's Meals</h2>
-                        <button onclick="showAddMealModal()" 
-                                class="px-4 py-2 rounded-lg text-white font-medium hover:opacity-90 transition"
-                                style="background-color: var(--sage-green);">
+                        <a href="{{ url_for('calendar.calendar') }}" 
+                           class="px-4 py-2 rounded-lg text-white font-medium hover:opacity-90 transition"
+                           style="background-color: var(--sage-green);">
                             <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                             </svg>
-                            Add Meal
-                        </button>
+                            Go to Meal Planner
+                        </a>
                     </div>
 
                     <div id="mealsList" class="space-y-4">
-                        <!-- Sample Meal 1 -->
-                        <div class="recipe-item border border-gray-200 rounded-lg p-4" data-meal-id="1">
-                            <div class="flex items-start justify-between mb-3">
-                                <div class="flex-1">
-                                    <div class="flex items-center gap-2 mb-1">
-                                        <span class="px-2 py-1 text-xs font-semibold rounded" style="background-color: rgba(74, 124, 89, 0.1); color: var(--sage-green);">BREAKFAST</span>
-                                        <h3 class="text-lg font-semibold" style="color: var(--deep-charcoal);">Avocado Toast with Eggs</h3>
-                                    </div>
-                                    <p class="text-sm text-gray-600">Whole grain toast, avocado, poached eggs</p>
-                                </div>
-                                <button onclick="removeMeal(1)" class="text-red-500 hover:text-red-700 ml-4">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                    </svg>
-                                </button>
-                            </div>
-
-                            <!-- Serving Size Scaler -->
-                            <div class="bg-gray-50 rounded-lg p-4 mb-3">
-                                <div class="flex items-center justify-between mb-3">
-                                    <label class="text-sm font-medium" style="color: var(--deep-charcoal);">Servings</label>
-                                    <div class="flex items-center gap-3">
-                                        <button onclick="adjustServing(1, -0.5)" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-200 transition" style="background-color: #e5e7eb;">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
-                                            </svg>
-                                        </button>
-                                        <span class="text-2xl font-bold w-12 text-center" style="color: var(--sage-green);" id="serving-1">1</span>
-                                        <button onclick="adjustServing(1, 0.5)" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-200 transition" style="background-color: #e5e7eb;">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
-                                <input type="range" 
-                                       class="slider w-full" 
-                                       id="slider-1"
-                                       min="0.5" 
-                                       max="4" 
-                                       step="0.5" 
-                                       value="1"
-                                       oninput="updateServing(1, this.value)">
-                                <div class="flex justify-between text-xs text-gray-500 mt-1">
-                                    <span>0.5x</span>
-                                    <span>4x</span>
-                                </div>
-                            </div>
-
-                            <!-- Nutrition Info -->
-                            <div class="grid grid-cols-4 gap-3">
-                                <div class="text-center">
-                                    <p class="text-2xl font-bold" style="color: var(--sage-green);" id="calories-1">420</p>
-                                    <p class="text-xs text-gray-600">Calories</p>
-                                </div>
-                                <div class="text-center">
-                                    <p class="text-lg font-semibold" id="protein-1">18g</p>
-                                    <p class="text-xs text-gray-600">Protein</p>
-                                </div>
-                                <div class="text-center">
-                                    <p class="text-lg font-semibold" id="carbs-1">35g</p>
-                                    <p class="text-xs text-gray-600">Carbs</p>
-                                </div>
-                                <div class="text-center">
-                                    <p class="text-lg font-semibold" id="fats-1">22g</p>
-                                    <p class="text-xs text-gray-600">Fats</p>
-                                </div>
-                            </div>
-
-                            <!-- Ingredients -->
-                            <div class="mt-4 pt-4 border-t border-gray-200">
-                                <button onclick="toggleIngredients(1)" class="text-sm font-medium hover:underline" style="color: var(--sage-green);">
-                                    <svg class="w-4 h-4 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                    </svg>
-                                    View Ingredients
-                                </button>
-                                <div id="ingredients-1" class="hidden mt-3 space-y-1 text-sm text-gray-700">
-                                    <p>• <span class="ingredient-qty" data-base="2">2</span> slices whole grain bread</p>
-                                    <p>• <span class="ingredient-qty" data-base="1">1</span> ripe avocado</p>
-                                    <p>• <span class="ingredient-qty" data-base="2">2</span> eggs</p>
-                                    <p>• <span class="ingredient-qty" data-base="1">1</span> tbsp olive oil</p>
-                                    <p>• Salt and pepper to taste</p>
-                                </div>
-                            </div>
+                        <!-- Loading placeholder - will be replaced by JavaScript -->
+                        <div class="text-center py-12">
+                            <svg class="w-12 h-12 mx-auto text-gray-400 mb-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            <p class="text-gray-600">Loading today's meals...</p>
                         </div>
-
-                        <!-- Sample Meal 2 -->
-                        <div class="recipe-item border border-gray-200 rounded-lg p-4" data-meal-id="2">
-                            <div class="flex items-start justify-between mb-3">
-                                <div class="flex-1">
-                                    <div class="flex items-center gap-2 mb-1">
-                                        <span class="px-2 py-1 text-xs font-semibold rounded" style="background-color: rgba(224, 122, 95, 0.1); color: var(--terracotta);">LUNCH</span>
-                                        <h3 class="text-lg font-semibold" style="color: var(--deep-charcoal);">Greek Chicken Salad</h3>
-                                    </div>
-                                    <p class="text-sm text-gray-600">Grilled chicken, mixed greens, feta, olives</p>
-                                </div>
-                                <button onclick="removeMeal(2)" class="text-red-500 hover:text-red-700 ml-4">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                    </svg>
-                                </button>
-                            </div>
-
-                            <!-- Serving Size Scaler -->
-                            <div class="bg-gray-50 rounded-lg p-4 mb-3">
-                                <div class="flex items-center justify-between mb-3">
-                                    <label class="text-sm font-medium" style="color: var(--deep-charcoal);">Servings</label>
-                                    <div class="flex items-center gap-3">
-                                        <button onclick="adjustServing(2, -0.5)" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-200 transition" style="background-color: #e5e7eb;">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
-                                            </svg>
-                                        </button>
-                                        <span class="text-2xl font-bold w-12 text-center" style="color: var(--sage-green);" id="serving-2">1</span>
-                                        <button onclick="adjustServing(2, 0.5)" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-200 transition" style="background-color: #e5e7eb;">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
-                                <input type="range" 
-                                       class="slider w-full" 
-                                       id="slider-2"
-                                       min="0.5" 
-                                       max="4" 
-                                       step="0.5" 
-                                       value="1"
-                                       oninput="updateServing(2, this.value)">
-                                <div class="flex justify-between text-xs text-gray-500 mt-1">
-                                    <span>0.5x</span>
-                                    <span>4x</span>
-                                </div>
-                            </div>
-
-                            <!-- Nutrition Info -->
-                            <div class="grid grid-cols-4 gap-3">
-                                <div class="text-center">
-                                    <p class="text-2xl font-bold" style="color: var(--sage-green);" id="calories-2">380</p>
-                                    <p class="text-xs text-gray-600">Calories</p>
-                                </div>
-                                <div class="text-center">
-                                    <p class="text-lg font-semibold" id="protein-2">35g</p>
-                                    <p class="text-xs text-gray-600">Protein</p>
-                                </div>
-                                <div class="text-center">
-                                    <p class="text-lg font-semibold" id="carbs-2">18g</p>
-                                    <p class="text-xs text-gray-600">Carbs</p>
-                                </div>
-                                <div class="text-center">
-                                    <p class="text-lg font-semibold" id="fats-2">15g</p>
-                                    <p class="text-xs text-gray-600">Fats</p>
-                                </div>
-                            </div>
-
-                            <!-- Ingredients -->
-                            <div class="mt-4 pt-4 border-t border-gray-200">
-                                <button onclick="toggleIngredients(2)" class="text-sm font-medium hover:underline" style="color: var(--sage-green);">
-                                    <svg class="w-4 h-4 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                    </svg>
-                                    View Ingredients
-                                </button>
-                                <div id="ingredients-2" class="hidden mt-3 space-y-1 text-sm text-gray-700">
-                                    <p>• <span class="ingredient-qty" data-base="200">200</span>g grilled chicken breast</p>
-                                    <p>• <span class="ingredient-qty" data-base="3">3</span> cups mixed greens</p>
-                                    <p>• <span class="ingredient-qty" data-base="50">50</span>g feta cheese</p>
-                                    <p>• <span class="ingredient-qty" data-base="30">30</span>g kalamata olives</p>
-                                    <p>• <span class="ingredient-qty" data-base="1">1</span> cucumber, diced</p>
-                                    <p>• <span class="ingredient-qty" data-base="2">2</span> tbsp olive oil</p>
-                                    <p>• <span class="ingredient-qty" data-base="1">1</span> tbsp lemon juice</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Sample Meal 3 -->
-                        <div class="recipe-item border border-gray-200 rounded-lg p-4" data-meal-id="3">
-                            <div class="flex items-start justify-between mb-3">
-                                <div class="flex-1">
-                                    <div class="flex items-center gap-2 mb-1">
-                                        <span class="px-2 py-1 text-xs font-semibold rounded" style="background-color: rgba(61, 64, 91, 0.1); color: var(--deep-charcoal);">DINNER</span>
-                                        <h3 class="text-lg font-semibold" style="color: var(--deep-charcoal);">Salmon with Quinoa</h3>
-                                    </div>
-                                    <p class="text-sm text-gray-600">Baked salmon, quinoa, roasted vegetables</p>
-                                </div>
-                                <button onclick="removeMeal(3)" class="text-red-500 hover:text-red-700 ml-4">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                    </svg>
-                                </button>
-                            </div>
-
-                            <!-- Serving Size Scaler -->
-                            <div class="bg-gray-50 rounded-lg p-4 mb-3">
-                                <div class="flex items-center justify-between mb-3">
-                                    <label class="text-sm font-medium" style="color: var(--deep-charcoal);">Servings</label>
-                                    <div class="flex items-center gap-3">
-                                        <button onclick="adjustServing(3, -0.5)" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-200 transition" style="background-color: #e5e7eb;">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
-                                            </svg>
-                                        </button>
-                                        <span class="text-2xl font-bold w-12 text-center" style="color: var(--sage-green);" id="serving-3">1</span>
-                                        <button onclick="adjustServing(3, 0.5)" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-200 transition" style="background-color: #e5e7eb;">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
-                                <input type="range" 
-                                       class="slider w-full" 
-                                       id="slider-3"
-                                       min="0.5" 
-                                       max="4" 
-                                       step="0.5" 
-                                       value="1"
-                                       oninput="updateServing(3, this.value)">
-                                <div class="flex justify-between text-xs text-gray-500 mt-1">
-                                    <span>0.5x</span>
-                                    <span>4x</span>
-                                </div>
-                            </div>
-
-                            <!-- Nutrition Info -->
-                            <div class="grid grid-cols-4 gap-3">
-                                <div class="text-center">
-                                    <p class="text-2xl font-bold" style="color: var(--sage-green);" id="calories-3">650</p>
-                                    <p class="text-xs text-gray-600">Calories</p>
-                                </div>
-                                <div class="text-center">
-                                    <p class="text-lg font-semibold" id="protein-3">32g</p>
-                                    <p class="text-xs text-gray-600">Protein</p>
-                                </div>
-                                <div class="text-center">
-                                    <p class="text-lg font-semibold" id="carbs-3">127g</p>
-                                    <p class="text-xs text-gray-600">Carbs</p>
-                                </div>
-                                <div class="text-center">
-                                    <p class="text-lg font-semibold" id="fats-3">8g</p>
-                                    <p class="text-xs text-gray-600">Fats</p>
-                                </div>
-                            </div>
-
-                            <!-- Ingredients -->
-                            <div class="mt-4 pt-4 border-t border-gray-200">
-                                <button onclick="toggleIngredients(3)" class="text-sm font-medium hover:underline" style="color: var(--sage-green);">
-                                    <svg class="w-4 h-4 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                    </svg>
-                                    View Ingredients
-                                </button>
-                                <div id="ingredients-3" class="hidden mt-3 space-y-1 text-sm text-gray-700">
-                                    <p>• <span class="ingredient-qty" data-base="180">180</span>g salmon fillet</p>
-                                    <p>• <span class="ingredient-qty" data-base="1">1</span> cup quinoa (cooked)</p>
-                                    <p>• <span class="ingredient-qty" data-base="1">1</span> cup broccoli florets</p>
-                                    <p>• <span class="ingredient-qty" data-base="1">1</span> bell pepper, sliced</p>
-                                    <p>• <span class="ingredient-qty" data-base="2">2</span> tbsp olive oil</p>
-                                    <p>• Lemon, herbs, salt and pepper</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Weekly Summary -->
-                <div class="bg-white rounded-lg shadow-lg p-6">
-                    <h2 class="text-xl font-bold mb-4" style="color: var(--deep-charcoal);">Weekly Average</h2>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div class="nutrition-card bg-gray-50 rounded-lg p-4 text-center">
-                            <p class="text-3xl font-bold" style="color: var(--sage-green);">1,850</p>
-                            <p class="text-sm text-gray-600 mt-1">Avg Calories/Day</p>
-                        </div>
-                        <div class="nutrition-card bg-gray-50 rounded-lg p-4 text-center">
-                            <p class="text-3xl font-bold" style="color: var(--sage-green);">95g</p>
-                            <p class="text-sm text-gray-600 mt-1">Avg Protein/Day</p>
-                        </div>
-                        <div class="nutrition-card bg-gray-50 rounded-lg p-4 text-center">
-                            <p class="text-3xl font-bold" style="color: var(--terracotta);">205g</p>
-                            <p class="text-sm text-gray-600 mt-1">Avg Carbs/Day</p>
-                        </div>
-                        <div class="nutrition-card bg-gray-50 rounded-lg p-4 text-center">
-                            <p class="text-3xl font-bold" style="color: #F59E0B;">58g</p>
-                            <p class="text-sm text-gray-600 mt-1">Avg Fats/Day</p>
-                        </div>
+                        <!-- Meals will be dynamically loaded here -->
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Add Meal Modal -->
-    <div id="addMealModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-            <div class="flex items-center justify-between mb-6">
-                <h2 class="text-2xl font-bold" style="color: var(--deep-charcoal);">Add Meal</h2>
-                <button onclick="closeAddMealModal()" class="text-gray-500 hover:text-gray-700">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            </div>
 
-            <div class="mb-4">
-                <input type="text" 
-                       id="mealSearch"
-                       placeholder="Search recipes..."
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
-                       style="focus:ring-color: var(--sage-green);">
-            </div>
-
-            <div class="space-y-3">
-                <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition" onclick="addMealFromLibrary('Smoothie Bowl', 'BREAKFAST', 320, 12, 45, 8)">
-                    <h3 class="font-semibold" style="color: var(--deep-charcoal);">Smoothie Bowl</h3>
-                    <p class="text-sm text-gray-600">320 cal • 12g protein • 45g carbs • 8g fat</p>
-                </div>
-                <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition" onclick="addMealFromLibrary('Turkey Sandwich', 'LUNCH', 450, 28, 52, 12)">
-                    <h3 class="font-semibold" style="color: var(--deep-charcoal);">Turkey Sandwich</h3>
-                    <p class="text-sm text-gray-600">450 cal • 28g protein • 52g carbs • 12g fat</p>
-                </div>
-                <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition" onclick="addMealFromLibrary('Pasta Primavera', 'DINNER', 580, 18, 72, 22)">
-                    <h3 class="font-semibold" style="color: var(--deep-charcoal);">Pasta Primavera</h3>
-                    <p class="text-sm text-gray-600">580 cal • 18g protein • 72g carbs • 22g fat</p>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <script>
-        // Meal data structure
-        const mealData = {
-            1: { calories: 420, protein: 18, carbs: 35, fats: 22, servings: 1 },
-            2: { calories: 380, protein: 35, carbs: 18, fats: 15, servings: 1 },
-            3: { calories: 650, protein: 32, carbs: 127, fats: 8, servings: 1 }
-        };
+        // Meal data structure - will be populated from API
+        let mealData = {};
+        let mealIdCounter = 1;
+        let calorieGoalValue = 2000;
+        let currentDate = new Date();
 
-        // Initialize
-        updateDailySummary();
+        // Initialize - Load today's meals from calendar
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set date picker to today
+            const today = new Date();
+            document.getElementById('selectedDate').value = formatDateForInput(today);
+            
+            loadTodaysMeals();
+            loadDailySummary();
+            loadWeeklyAverage();
+        });
+
+        function formatDateForInput(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function parseInputDate(dateStr) {
+            const [year, month, day] = dateStr.split('-');
+            return new Date(year, month - 1, day);
+        }
+
+        function previousDay() {
+            const dateInput = document.getElementById('selectedDate');
+            const currentDate = parseInputDate(dateInput.value);
+            currentDate.setDate(currentDate.getDate() - 1);
+            dateInput.value = formatDateForInput(currentDate);
+            loadSelectedDate();
+        }
+
+        function nextDay() {
+            const dateInput = document.getElementById('selectedDate');
+            const currentDate = parseInputDate(dateInput.value);
+            currentDate.setDate(currentDate.getDate() + 1);
+            dateInput.value = formatDateForInput(currentDate);
+            loadSelectedDate();
+        }
+
+        function goToToday() {
+            const today = new Date();
+            document.getElementById('selectedDate').value = formatDateForInput(today);
+            loadSelectedDate();
+        }
+
+        function loadSelectedDate() {
+            const selectedDate = document.getElementById('selectedDate').value;
+            currentDate = parseInputDate(selectedDate);
+            loadTodaysMeals(selectedDate);
+            loadWeeklyAverage();
+        }
+
+        // Load today's meals from calendar
+        async function loadTodaysMeals(date = null) {
+            try {
+                const url = date ? `/calorie-tracker/api/todays-meals?date=${date}` : '/calorie-tracker/api/todays-meals';
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                console.log('API Response:', data);
+                console.log('Meals array:', data.meals);
+                console.log('Number of meals:', data.meals ? data.meals.length : 0);
+                
+                if (data.success && data.meals && data.meals.length > 0) {
+                    console.log('Loading', data.meals.length, 'meals');
+                    // Clear existing meals
+                    const mealsList = document.getElementById('mealsList');
+                    mealsList.innerHTML = '';
+                    mealData = {};
+                    
+                    // Add each meal
+                    data.meals.forEach((meal, index) => {
+                        console.log(`Adding meal ${index + 1}:`, meal);
+                        const mealId = mealIdCounter++;
+                        addMealToList(mealId, meal);
+                    });
+                    
+                    updateDailySummary();
+                } else {
+                    console.log('No meals found - showing empty state');
+                    // Show empty state
+                    showEmptyState();
+                }
+            } catch (error) {
+                console.error('Error loading meals:', error);
+                showEmptyState();
+            }
+        }
+
+        // Load weekly average
+        async function loadWeeklyAverage() {
+            try {
+                const selectedDate = document.getElementById('selectedDate').value;
+                const response = await fetch(`/calorie-tracker/api/weekly-average?date=${selectedDate}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('weekAvgCalories').textContent = Math.round(data.avg_calories);
+                    document.getElementById('weekAvgProtein').textContent = Math.round(data.avg_protein) + 'g';
+                    document.getElementById('weekAvgCarbs').textContent = Math.round(data.avg_carbs) + 'g';
+                    document.getElementById('weekAvgFats').textContent = Math.round(data.avg_fats) + 'g';
+                    document.getElementById('weekRange').textContent = data.week_range;
+                }
+            } catch (error) {
+                console.error('Error loading weekly average:', error);
+            }
+        }
+
+        // Load daily summary preferences
+        async function loadDailySummary() {
+            try {
+                const response = await fetch('/calorie-tracker/api/daily-summary');
+                const data = await response.json();
+                
+                if (data.success) {
+                    calorieGoalValue = data.calorie_goal || 2000;
+                    document.getElementById('calorieGoal').value = calorieGoalValue;
+                    document.getElementById('proteinGoal').value = data.protein_goal || 150;
+                    document.getElementById('carbsGoal').value = data.carbs_goal || 200;
+                    document.getElementById('fatsGoal').value = data.fats_goal || 67;
+                    updateDailySummary();
+                }
+            } catch (error) {
+                console.error('Error loading daily summary:', error);
+            }
+        }
+
+        // Show empty state when no meals
+        function showEmptyState() {
+            const mealsList = document.getElementById('mealsList');
+            mealsList.innerHTML = `
+                <div class="text-center py-12">
+                    <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    <h3 class="text-lg font-medium text-gray-700 mb-2">No meals planned for today</h3>
+                    <p class="text-gray-500 mb-4">Add meals to today's calendar to track your nutrition</p>
+                    <p class="text-sm text-gray-500">Use the "Go to Meal Planner" button above to add meals</p>
+                </div>
+            `;
+        }
+
+        // Add meal to the list
+        function addMealToList(mealId, meal) {
+            const caloriesPerServing = meal.calories_per_serving || 0;
+            const savedServings = meal.current_servings || 1;
+            
+            // Calculate nutrition (rough estimates)
+            const protein = Math.round((caloriesPerServing * 0.30) / 4);
+            const carbs = Math.round((caloriesPerServing * 0.40) / 4);
+            const fats = Math.round((caloriesPerServing * 0.30) / 9);
+            
+            // Store meal data
+            mealData[mealId] = {
+                recipe_id: meal.recipe_id,
+                title: meal.title,
+                meal_type: meal.meal_type,
+                base_calories: caloriesPerServing,
+                base_protein: protein,
+                base_carbs: carbs,
+                base_fats: fats,
+                servings: savedServings,
+                ingredients: meal.ingredients
+            };
+            
+            // Parse ingredients
+            const ingredientsArray = meal.ingredients ? meal.ingredients.split('\n').filter(i => i.trim()) : [];
+            
+            // Meal type color
+            const mealTypeColors = {
+                'BREAKFAST': 'rgba(74, 124, 89, 0.1); color: var(--sage-green)',
+                'LUNCH': 'rgba(224, 122, 95, 0.1); color: var(--terracotta)',
+                'DINNER': 'rgba(61, 64, 91, 0.1); color: var(--deep-charcoal)'
+            };
+            const mealColor = mealTypeColors[meal.meal_type] || mealTypeColors['BREAKFAST'];
+            
+            // Calculate initial values based on saved servings
+            const initialCalories = Math.round(caloriesPerServing * savedServings);
+            const initialProtein = Math.round(protein * savedServings);
+            const initialCarbs = Math.round(carbs * savedServings);
+            const initialFats = Math.round(fats * savedServings);
+            
+            const mealHtml = `
+                <div class="recipe-item border border-gray-200 rounded-lg p-4" data-meal-id="${mealId}">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="px-2 py-1 text-xs font-semibold rounded" style="background-color: ${mealColor}">${meal.meal_type}</span>
+                                <h3 class="text-lg font-semibold" style="color: var(--deep-charcoal);">${meal.title}</h3>
+                            </div>
+                            <p class="text-sm text-gray-600">${meal.description || 'Delicious homemade recipe'}</p>
+                        </div>
+                        <button onclick="removeMeal(${mealId})" class="text-red-500 hover:text-red-700 ml-4">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Serving Size Scaler -->
+                    <div class="bg-gray-50 rounded-lg p-4 mb-3">
+                        <div class="flex items-center justify-between mb-3">
+                            <label class="text-sm font-medium" style="color: var(--deep-charcoal);">Servings</label>
+                            <div class="flex items-center gap-3">
+                                <button onclick="adjustServing(${mealId}, -0.5)" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-200 transition" style="background-color: #e5e7eb;">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                                    </svg>
+                                </button>
+                                <span class="text-2xl font-bold w-12 text-center" style="color: var(--sage-green);" id="serving-${mealId}">${savedServings}</span>
+                                <button onclick="adjustServing(${mealId}, 0.5)" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-200 transition" style="background-color: #e5e7eb;">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <input type="range" 
+                               class="slider w-full" 
+                               id="slider-${mealId}"
+                               min="0.5" 
+                               max="4" 
+                               step="0.5" 
+                               value="${savedServings}"
+                               oninput="updateServing(${mealId}, this.value)">
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>0.5x</span>
+                            <span>4x</span>
+                        </div>
+                    </div>
+
+                    <!-- Nutrition Info -->
+                    <div class="grid grid-cols-4 gap-3">
+                        <div class="text-center">
+                            <p class="text-2xl font-bold" style="color: var(--sage-green);" id="calories-${mealId}">${initialCalories}</p>
+                            <p class="text-xs text-gray-600">Calories</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-lg font-semibold" id="protein-${mealId}">${initialProtein}g</p>
+                            <p class="text-xs text-gray-600">Protein</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-lg font-semibold" id="carbs-${mealId}">${initialCarbs}g</p>
+                            <p class="text-xs text-gray-600">Carbs</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-lg font-semibold" id="fats-${mealId}">${initialFats}g</p>
+                            <p class="text-xs text-gray-600">Fats</p>
+                        </div>
+                    </div>
+
+                    <!-- Ingredients -->
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <button onclick="toggleIngredients(${mealId})" class="text-sm font-medium hover:underline" style="color: var(--sage-green);">
+                            <svg class="w-4 h-4 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                            View Ingredients
+                        </button>
+                        <div id="ingredients-${mealId}" class="hidden mt-3 space-y-1 text-sm text-gray-700">
+                            ${ingredientsArray.map(ing => `<p>• ${ing}</p>`).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('mealsList').insertAdjacentHTML('beforeend', mealHtml);
+        }
 
         function updateServing(mealId, value) {
             const servingValue = parseFloat(value);
@@ -732,29 +774,44 @@
             // Update meal data
             mealData[mealId].servings = servingValue;
             
-            // Update nutrition values
-            const baseCalories = mealId === 1 ? 420 : (mealId === 2 ? 380 : 650);
-            const baseProtein = mealId === 1 ? 18 : (mealId === 2 ? 35 : 32);
-            const baseCarbs = mealId === 1 ? 35 : (mealId === 2 ? 18 : 127);
-            const baseFats = mealId === 1 ? 22 : (mealId === 2 ? 15 : 8);
+            // Get base values
+            const meal = mealData[mealId];
+            const baseCalories = meal.base_calories;
+            const baseProtein = meal.base_protein;
+            const baseCarbs = meal.base_carbs;
+            const baseFats = meal.base_fats;
             
+            // Update nutrition values
             document.getElementById(`calories-${mealId}`).textContent = Math.round(baseCalories * servingValue);
             document.getElementById(`protein-${mealId}`).textContent = Math.round(baseProtein * servingValue) + 'g';
             document.getElementById(`carbs-${mealId}`).textContent = Math.round(baseCarbs * servingValue) + 'g';
             document.getElementById(`fats-${mealId}`).textContent = Math.round(baseFats * servingValue) + 'g';
             
-            // Update ingredients
-            const ingredientsDiv = document.getElementById(`ingredients-${mealId}`);
-            if (ingredientsDiv) {
-                const ingredients = ingredientsDiv.querySelectorAll('.ingredient-qty');
-                ingredients.forEach(ing => {
-                    const baseQty = parseFloat(ing.getAttribute('data-base'));
-                    const newQty = baseQty * servingValue;
-                    ing.textContent = newQty % 1 === 0 ? newQty : newQty.toFixed(1);
-                });
-            }
-            
             updateDailySummary();
+            
+            // Save serving size to backend
+            const selectedDate = document.getElementById('selectedDate').value;
+            fetch('/calorie-tracker/api/save-serving', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    recipe_id: meal.recipe_id,
+                    meal_type: meal.meal_type.toLowerCase(),
+                    servings: servingValue,
+                    date: selectedDate
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    console.error('Failed to save serving size:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error saving serving size:', error);
+            });
         }
 
         function adjustServing(mealId, change) {
@@ -769,42 +826,89 @@
             let totalCarbs = 0;
             let totalFats = 0;
             
+            // Calculate totals from meal data
             Object.keys(mealData).forEach(mealId => {
-                const calories = parseInt(document.getElementById(`calories-${mealId}`).textContent);
-                const protein = parseInt(document.getElementById(`protein-${mealId}`).textContent);
-                const carbs = parseInt(document.getElementById(`carbs-${mealId}`).textContent);
-                const fats = parseInt(document.getElementById(`fats-${mealId}`).textContent);
-                
-                totalCalories += calories;
-                totalProtein += protein;
-                totalCarbs += carbs;
-                totalFats += fats;
+                const meal = mealData[mealId];
+                totalCalories += Math.round(meal.base_calories * meal.servings);
+                totalProtein += Math.round(meal.base_protein * meal.servings);
+                totalCarbs += Math.round(meal.base_carbs * meal.servings);
+                totalFats += Math.round(meal.base_fats * meal.servings);
             });
             
             // Update calorie circle
-            const goal = parseInt(document.getElementById('calorieGoal').value);
+            const goal = parseInt(document.getElementById('calorieGoal').value) || calorieGoalValue;
             document.getElementById('currentCalories').textContent = totalCalories;
             document.getElementById('targetCalories').textContent = goal;
-            document.getElementById('remainingCalories').textContent = Math.max(0, goal - totalCalories) + ' remaining';
+            
+            const remaining = goal - totalCalories;
+            if (remaining >= 0) {
+                document.getElementById('remainingCalories').textContent = remaining + ' remaining';
+            } else {
+                document.getElementById('remainingCalories').textContent = Math.abs(remaining) + ' over';
+            }
             
             // Update progress circle
-            const percentage = Math.min(100, (totalCalories / goal) * 100);
-            const circumference = 2 * Math.PI * 90;
-            const offset = circumference - (percentage / 100) * circumference;
-            document.getElementById('progressCircle').style.strokeDashoffset = offset;
+            const percentage = (totalCalories / goal) * 100;
+            const circumference = 2 * Math.PI * 90; // Circle radius is 90, so circumference = 565.4867
+            
+            // Calculate offset - allow going over 100%
+            let offset;
+            if (percentage <= 100) {
+                offset = circumference - (percentage / 100) * circumference;
+            } else {
+                // If over 100%, show full circle
+                offset = 0;
+            }
+            
+            const progressCircle = document.getElementById('progressCircle');
+            progressCircle.setAttribute('stroke-dashoffset', offset);
+            
+            // Change color if over goal
+            if (totalCalories > goal) {
+                progressCircle.setAttribute('stroke', '#E07A5F');
+            } else {
+                progressCircle.setAttribute('stroke', '#4A7C59');
+            }
+            
+            // Get macro goals from input fields
+            const proteinGoal = parseInt(document.getElementById('proteinGoal').value) || 150;
+            const carbsGoal = parseInt(document.getElementById('carbsGoal').value) || 200;
+            const fatsGoal = parseInt(document.getElementById('fatsGoal').value) || 67;
             
             // Update macros
-            document.getElementById('proteinValue').textContent = `${totalProtein}g / 120g`;
-            document.getElementById('carbsValue').textContent = `${totalCarbs}g / 250g`;
-            document.getElementById('fatsValue').textContent = `${totalFats}g / 65g`;
+            document.getElementById('proteinValue').textContent = `${totalProtein}g / ${proteinGoal}g`;
+            document.getElementById('carbsValue').textContent = `${totalCarbs}g / ${carbsGoal}g`;
+            document.getElementById('fatsValue').textContent = `${totalFats}g / ${fatsGoal}g`;
             
-            document.getElementById('proteinBar').style.width = Math.min(100, (totalProtein / 120) * 100) + '%';
-            document.getElementById('carbsBar').style.width = Math.min(100, (totalCarbs / 250) * 100) + '%';
-            document.getElementById('fatsBar').style.width = Math.min(100, (totalFats / 65) * 100) + '%';
+            document.getElementById('proteinBar').style.width = Math.min(100, (totalProtein / proteinGoal) * 100) + '%';
+            document.getElementById('carbsBar').style.width = Math.min(100, (totalCarbs / carbsGoal) * 100) + '%';
+            document.getElementById('fatsBar').style.width = Math.min(100, (totalFats / fatsGoal) * 100) + '%';
         }
 
-        function updateCalorieGoal() {
-            updateDailySummary();
+        function updateGoals() {
+            const newCalorieGoal = parseInt(document.getElementById('calorieGoal').value);
+            const newProteinGoal = parseInt(document.getElementById('proteinGoal').value);
+            const newCarbsGoal = parseInt(document.getElementById('carbsGoal').value);
+            const newFatsGoal = parseInt(document.getElementById('fatsGoal').value);
+            
+            if (newCalorieGoal >= 1000 && newCalorieGoal <= 5000) {
+                calorieGoalValue = newCalorieGoal;
+                updateDailySummary();
+                
+                // Save to backend
+                fetch('/calorie-tracker/api/daily-summary', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        calorie_goal: newCalorieGoal,
+                        protein_goal: newProteinGoal,
+                        carbs_goal: newCarbsGoal,
+                        fats_goal: newFatsGoal
+                    })
+                });
+            }
         }
 
         function toggleIngredients(mealId) {
@@ -812,35 +916,50 @@
             ingredientsDiv.classList.toggle('hidden');
         }
 
-        function removeMeal(mealId) {
-            if (confirm('Are you sure you want to remove this meal?')) {
+        async function removeMeal(mealId) {
+            if (confirm('Are you sure you want to remove this meal from your calendar and tracking?')) {
+                const meal = mealData[mealId];
+                
+                if (meal) {
+                    // Remove from calendar database
+                    try {
+                        const response = await fetch('/calendar/api/remove-recipe', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                recipe_id: meal.recipe_id,
+                                meal_type: meal.meal_type.toLowerCase()
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        if (!result.success) {
+                            console.warn('Could not remove from calendar:', result.error);
+                        }
+                    } catch (error) {
+                        console.error('Error removing meal from calendar:', error);
+                    }
+                }
+                
+                // Remove from UI
                 const mealElement = document.querySelector(`[data-meal-id="${mealId}"]`);
-                mealElement.remove();
+                if (mealElement) {
+                    mealElement.remove();
+                }
                 delete mealData[mealId];
-                updateDailySummary();
+                
+                // Check if no meals left
+                if (Object.keys(mealData).length === 0) {
+                    showEmptyState();
+                } else {
+                    updateDailySummary();
+                }
             }
         }
 
-        function showAddMealModal() {
-            document.getElementById('addMealModal').classList.remove('hidden');
-        }
 
-        function closeAddMealModal() {
-            document.getElementById('addMealModal').classList.add('hidden');
-            document.getElementById('mealSearch').value = '';
-        }
-
-        function addMealFromLibrary(name, mealType, calories, protein, carbs, fats) {
-            alert(`"${name}" would be added to your meal plan.`);
-            closeAddMealModal();
-        }
-
-        // Close modal when clicking outside
-        document.getElementById('addMealModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeAddMealModal();
-            }
-        });
 
         // Notification dropdown functionality
         function toggleNotificationDropdown() {
@@ -863,6 +982,7 @@
             }
         });
     </script>
+    <script src="/static/js/meal-reminders.js"></script>
     </div>
 </body>
 </html>
