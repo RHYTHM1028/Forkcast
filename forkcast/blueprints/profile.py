@@ -11,6 +11,7 @@ This blueprint handles:
 
 import os
 import uuid
+from datetime import datetime, date, timedelta
 from flask import (
     Blueprint, render_template, request, redirect, 
     url_for, flash, session, jsonify, current_app
@@ -27,14 +28,6 @@ profile_bp = Blueprint(
     __name__,
     template_folder='../templates'
 )
-
-
-@profile_bp.route('/dashboard')
-@login_required
-def dashboard():
-    """User dashboard page."""
-    user = get_current_user()
-    return render_template('dashboard.html', user=user)
 
 
 @profile_bp.route('/profile')
